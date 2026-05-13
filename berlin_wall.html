@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berlijnse Muur 3D Visualisatie</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #050608;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: #d4d4d4;
+            user-select: none;
+        }
+
+        #container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: flex-end;
+            padding: 48px;
+            box-sizing: border-box;
+            background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.4) 100%);
+            transition: opacity 1s ease;
+        }
+
+        .hud.hidden {
+            opacity: 0 !important;
+        }
+
+        .counter-container {
+            text-align: right;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .counter-value {
+            font-weight: 900;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            color: #ffffff;
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+
+        .counter-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #ff1e46;
+            letter-spacing: 0.25em;
+            margin-top: 8px;
+        }
+
+        .labels {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .label {
+            position: absolute;
+            color: white;
+            font-weight: 900;
+            letter-spacing: 0.3em;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        .label .sub {
+            display: block;
+            font-size: 0.4em;
+            font-weight: 400;
+            color: #8892a0;
+            letter-spacing: 0.1em;
+            margin-top: 5px;
+        }
+
+        /* Narrative Overlays */
+        .narrative {
+            position: absolute;
+            top: 10%;
+            left: 5%;
+            width: 40%;
+            z-index: 20;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s ease, transform 1s ease;
+            transform: translateX(-20px);
+        }
+
+        .narrative.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .narrative h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            margin: 0;
+            color: #ffffff;
+            line-height: 0.9;
+            text-transform: uppercase;
+        }
+
+        .narrative .content {
+            margin-top: 2rem;
+        }
+
+        .narrative .item {
+            margin-bottom: 1.5rem;
+        }
+
+        .narrative .item-title {
+            font-weight: 900;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+
+        .narrative .item-desc {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: #d4d4d4;
+        }
+
+        .narrative .west-text { color: #4facfe; }
+        .narrative .east-text { color: #ff1e46; }
+
+        .braindrain-text {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 1rem;
+        }
+
+        .solution-text {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #ff1e46;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container"></div>
+
+    <div class="hud">
+        <div class="counter-container">
+            <div class="counter-value" id="km-counter">0.00</div>
+            <div class="counter-label">KILOMETER</div>
+        </div>
+    </div>
+
+    <div class="labels" id="labels-container">
+        <div id="label-west-city" class="label" style="font-size: 24px; width: 250px;">West-Berlijn<span class="sub">(BRD)</span></div>
+        <div id="label-east-city" class="label" style="font-size: 24px; width: 250px;">Oost-Berlijn<span class="sub">(DDR)</span></div>
+        <div id="label-west-desc" class="label" style="font-size: 20px; width: 200px;">Vrijheid en welvaart</div>
+        <div id="label-east-desc" class="label" style="font-size: 20px; width: 200px;">Armoede en controle</div>
+    </div>
+
+    <!-- Narrative Overlays -->
+    <div id="narrative-1" class="narrative">
+        <h1>Waarom<br>een muur?</h1>
+        <div class="content">
+            <div class="item">
+                <div class="item-title">Berlijn</div>
+                <div class="item-desc">Gedeelde stad in het Oosten.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="narrative-2" class="narrative">
+        <h1>Westen vs<br>Oosten</h1>
+    </div>
+
+    <div id="narrative-3" class="narrative">
+        <div class="braindrain-text">
+            Massale vlucht naar het Westen:<br>
+            <span style="color: #4facfe;">"De braindrain"</span>
+        </div>
+    </div>
+
+    <div id="narrative-4" class="narrative">
+        <div class="solution-text">
+            Oplossing DDR:<br>
+            Grens dicht<br>
+            <span style="color: #ffffff; font-size: 1.5rem; font-weight: 400;">Augustus 1961</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/SVGLoader.js"></script>
+    <script src="berlin_wall_map_outline.path.js"></script>
+    <script src="berlin_wall_route.path.js"></script>
+
+    <script>
+        const CONFIG = {
+            duration: 12000,
+            wallColor: 0xff1e46,
+            mapColor: 0x1a1f26,
+            groundColor: 0x050608,
+            extrudeDepth: 10,
+        };
+
+        let scene, camera, renderer, wallMesh, mapGroup;
+        let startTimestamp = null;
+        let particles = [];
+        let westMeshes = [], eastMeshes = [];
+        let animationActive = true;
+        
+        const counter = document.getElementById('km-counter');
+        const hud = document.querySelector('.hud');
+        const labels = {
+            westCity: document.getElementById('label-west-city'),
+            eastCity: document.getElementById('label-east-city'),
+            westDesc: document.getElementById('label-west-desc'),
+            eastDesc: document.getElementById('label-east-desc')
+        };
+        const narratives = [
+            document.getElementById('narrative-1'),
+            document.getElementById('narrative-2'),
+            document.getElementById('narrative-3'),
+            document.getElementById('narrative-4')
+        ];
+
+        const WEST_CENTER = new THREE.Vector3(-350, 0, 0);
+        const EAST_CENTER = new THREE.Vector3(250, 0, 0);
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(CONFIG.groundColor);
+            scene.fog = new THREE.Fog(CONFIG.groundColor, 500, 3000);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 15000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+            scene.add(ambientLight);
+
+            const spotLight = new THREE.SpotLight(0xffffff, 1.5);
+            spotLight.position.set(500, 1500, 500);
+            spotLight.angle = Math.PI / 4;
+            spotLight.penumbra = 0.3;
+            spotLight.decay = 2;
+            spotLight.distance = 4000;
+            scene.add(spotLight);
+
+            const wallHeadGlow = new THREE.PointLight(CONFIG.wallColor, 3, 300);
+            scene.add(wallHeadGlow);
+            window.wallHeadGlow = wallHeadGlow;
+
+            const groundPulseGlow = new THREE.PointLight(0xff1e46, 0, 800);
+            groundPulseGlow.position.set(0, 50, 0);
+            scene.add(groundPulseGlow);
+            window.groundPulseGlow = groundPulseGlow;
+
+            const grid = new THREE.GridHelper(8000, 60, 0x333333, 0x111111);
+            grid.position.y = -1;
+            scene.add(grid);
+
+            const loader = new THREE.SVGLoader();
+            const mapData = loader.parse(`<svg><path d="${window.BERLIN_WALL_MAP_OUTLINE_D}"/></svg>`);
+            mapGroup = new THREE.Group();
+            
+            mapData.paths.forEach((path, pathIdx) => {
+                const shapes = path.toShapes(true);
+                shapes.forEach(shape => {
+                    const geometry = new THREE.ExtrudeGeometry(shape, {
+                        depth: CONFIG.extrudeDepth,
+                        bevelEnabled: true,
+                        bevelThickness: 1,
+                        bevelSize: 1,
+                    });
+                    const material = new THREE.MeshStandardMaterial({ 
+                        color: CONFIG.mapColor,
+                        roughness: 0.6,
+                        metalness: 0.1
+                    });
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.scale.set(0.1, -0.1, 1);
+                    mesh.position.set(197, 1050, 0);
+                    mapGroup.add(mesh);
+
+                    if (pathIdx < 5) westMeshes.push(mesh);
+                    else eastMeshes.push(mesh);
+                });
+            });
+
+            const box = new THREE.Box3().setFromObject(mapGroup);
+            const center = box.getCenter(new THREE.Vector3());
+            mapGroup.position.x = -center.x;
+            mapGroup.position.z = -center.y; 
+            mapGroup.position.y = 0;
+            mapGroup.rotation.x = Math.PI / 2; 
+            scene.add(mapGroup);
+
+            const wallData = loader.parse(`<svg><path d="${window.BERLIN_WALL_ROUTE_D}"/></svg>`);
+            const wallPath = wallData.paths[0];
+            const rawPoints = wallPath.subPaths[0].getPoints();
+            
+            const wallPoints = rawPoints.map(p => {
+                const x_svg = p.x * 0.561 + 122.5;
+                const y_svg = p.y * 0.561 - 45;
+                return new THREE.Vector3(x_svg - center.x, CONFIG.extrudeDepth + 2, y_svg - center.y);
+            });
+
+            const curve = new THREE.CatmullRomCurve3(wallPoints);
+            const tubeGeo = new THREE.TubeGeometry(curve, 1000, 2, 8, false);
+            
+            const wallMaterial = new THREE.MeshStandardMaterial({
+                color: CONFIG.wallColor,
+                emissive: CONFIG.wallColor,
+                emissiveIntensity: 2,
+                transparent: true,
+            });
+
+            wallMaterial.onBeforeCompile = (shader) => {
+                shader.uniforms.progress = { value: 0 };
+                shader.vertexShader = `
+                    varying float vLineProgress;
+                    attribute float lineProgress;
+                    ${shader.vertexShader}
+                `.replace(`#include <begin_vertex>`, `#include <begin_vertex>\nvLineProgress = lineProgress;`);
+                shader.fragmentShader = `
+                    uniform float progress;
+                    varying float vLineProgress;
+                    ${shader.fragmentShader}
+                `.replace(`#include <dithering_fragment>`, `#include <dithering_fragment>\nif (vLineProgress > progress) discard;`);
+                wallMaterial.userData.shader = shader;
+            };
+
+            const numVertices = tubeGeo.attributes.position.count;
+            const progressAttr = new Float32Array(numVertices);
+            const radialSegments = tubeGeo.parameters.radialSegments;
+            const tubularSegments = tubeGeo.parameters.tubularSegments;
+            for (let i = 0; i <= tubularSegments; i++) {
+                for (let j = 0; j <= radialSegments; j++) {
+                    const index = i * (radialSegments + 1) + j;
+                    if (index < numVertices) progressAttr[index] = i / tubularSegments;
+                }
+            }
+            tubeGeo.setAttribute('lineProgress', new THREE.BufferAttribute(progressAttr, 1));
+
+            wallMesh = new THREE.Mesh(tubeGeo, wallMaterial);
+            scene.add(wallMesh);
+
+            const particleCount = 150;
+            const particleGeo = new THREE.SphereGeometry(1.5, 8, 8);
+            
+            for(let i = 0; i < particleCount; i++) {
+                const p = new THREE.Mesh(particleGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true }));
+                resetParticle(p);
+                p.visible = false;
+                scene.add(p);
+                particles.push(p);
+            }
+
+            window.addEventListener('resize', onWindowResize, false);
+            requestAnimationFrame(animate);
+        }
+
+        function resetParticle(p) {
+            p.position.set(EAST_CENTER.x + (Math.random() - 0.5) * 400, 2, EAST_CENTER.z + (Math.random() - 0.5) * 400);
+            p.userData.speed = 1.5 + Math.random() * 2;
+            p.userData.life = Math.random(); 
+        }
+
+        function updateParticles(visible, opacity = 1) {
+            particles.forEach(p => {
+                p.visible = visible && opacity > 0;
+                if (p.visible) {
+                    p.position.x -= p.userData.speed;
+                    p.userData.life += 0.005;
+                    if (p.position.x < -800 || p.userData.life > 1) {
+                        resetParticle(p);
+                        p.userData.life = 0;
+                    }
+                    p.scale.setScalar(Math.sin(p.userData.life * Math.PI));
+                    p.material.opacity = opacity;
+                }
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function updateLabels(phase, opacity = 1) {
+            const labelSets = [
+                { city: labels.westCity, desc: labels.westDesc, pos: WEST_CENTER },
+                { city: labels.eastCity, desc: labels.eastDesc, pos: EAST_CENTER }
+            ];
+
+            labelSets.forEach(set => {
+                const vector = set.pos.clone().project(camera);
+                const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (vector.y * -0.5 + 0.5) * window.innerHeight;
+                
+                set.city.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+                set.desc.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+                
+                const dist = camera.position.distanceTo(set.pos);
+                const isNear = dist < 4500;
+
+                if (phase === 1 || phase >= 3) {
+                    set.city.style.opacity = isNear ? opacity : 0;
+                    set.desc.style.opacity = 0;
+                } else if (phase === 2) {
+                    set.city.style.opacity = 0;
+                    set.desc.style.opacity = isNear ? opacity : 0;
+                } else {
+                    set.city.style.opacity = 0;
+                    set.desc.style.opacity = 0;
+                }
+            });
+        }
+
+        function animate(timestamp) {
+            if (!animationActive) return;
+            if (!startTimestamp) startTimestamp = timestamp;
+            const elapsed = timestamp - startTimestamp;
+            
+            const PHASE0_END = 12000;
+            const PHASE1_END = 18000;
+            const PHASE2_END = 24000;
+            const PHASE3_END = 30000;
+            const PHASE4_END = 45000;
+            const PHASE5_START = 45000;
+
+            let phase = 0;
+            if (elapsed > PHASE0_END) phase = 1;
+            if (elapsed > PHASE1_END) phase = 2;
+            if (elapsed > PHASE2_END) phase = 3;
+            if (elapsed > PHASE3_END) phase = 4;
+            if (elapsed > PHASE5_START) phase = 5;
+
+            const rawDrawProgress = Math.min(elapsed / PHASE0_END, 1);
+            const drawProgress = rawDrawProgress < 0.5 ? 4 * rawDrawProgress ** 3 : 1 - (-2 * rawDrawProgress + 2) ** 3 / 2;
+
+            let targetPos = new THREE.Vector3();
+            let targetLookAt = new THREE.Vector3(0,0,0);
+
+            if (phase === 0) {
+                const angle = drawProgress * Math.PI * 0.25;
+                const radius = drawProgress * 800;
+                const height = 1500 - (drawProgress * 1100);
+                targetPos.set(Math.sin(angle) * radius, height, Math.cos(angle) * radius + (1-drawProgress)*0.1);
+            } else if (phase === 1) {
+                const p = (elapsed - PHASE0_END) / (PHASE1_END - PHASE0_END);
+                const angle = Math.PI * 0.25 + p * (Math.PI * 0.15);
+                targetPos.set(Math.sin(angle) * 1000, 600, Math.cos(angle) * 1000);
+            } else if (phase === 2) {
+                const p = (elapsed - PHASE1_END) / (PHASE2_END - PHASE1_END);
+                const angle = Math.PI * 0.4 + p * 0.1;
+                targetPos.set(Math.sin(angle) * 1000, 600, Math.cos(angle) * 1000);
+            } else if (phase === 3) {
+                const p = (elapsed - PHASE2_END) / (PHASE3_END - PHASE2_END);
+                const angle = Math.PI * 0.5;
+                targetPos.set(Math.sin(angle) * (1000 - p * 300), 400, Math.cos(angle) * (1000 - p * 300));
+            } else if (phase === 4) {
+                const p = (elapsed - PHASE3_END) / (PHASE4_END - PHASE3_END);
+                const angle = Math.PI * 0.5 + p * Math.PI * 0.4;
+                const radius = 700 + Math.sin(p * Math.PI) * 100;
+                const height = 400 + p * 200;
+                targetPos.set(Math.sin(angle) * radius, height, Math.cos(angle) * radius);
+            } else if (phase === 5) {
+                const p = Math.min((elapsed - PHASE5_START) / 8000, 1);
+                const returnEase = p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p+2,3)/2;
+                const startAngle = Math.PI * 0.9;
+                const angle = startAngle - returnEase * startAngle;
+                const radius = 800 - returnEase * 800; 
+                const height = 600 + returnEase * 900; 
+                targetPos.set(Math.sin(angle) * radius, height, Math.cos(angle) * radius + 0.1);
+            }
+
+            camera.position.lerp(targetPos, 0.05);
+            camera.lookAt(targetLookAt);
+
+            narratives.forEach((nav, index) => {
+                if (phase === index + 1) nav.classList.add('active');
+                else nav.classList.remove('active');
+            });
+
+            if (phase > 0) hud.classList.add('hidden');
+            else hud.classList.remove('hidden');
+
+            if (phase >= 2) {
+                const p = Math.min((elapsed - PHASE1_END) / 2000, 1);
+                westMeshes.forEach(m => m.material.color.lerpColors(new THREE.Color(CONFIG.mapColor), new THREE.Color(0x224466), p));
+                eastMeshes.forEach(m => m.material.color.lerpColors(new THREE.Color(CONFIG.mapColor), new THREE.Color(0x331111), p));
+            }
+
+            if (wallMesh.material.userData.shader) wallMesh.material.userData.shader.uniforms.progress.value = drawProgress;
+            
+            if (phase === 4) {
+                wallMesh.material.emissiveIntensity = 2;
+                window.groundPulseGlow.intensity = 0;
+            } else {
+                wallMesh.material.emissiveIntensity = 2;
+                window.groundPulseGlow.intensity = 0;
+            }
+
+            updateParticles(phase === 3);
+
+            if (window.wallHeadGlow && wallMesh.geometry.parameters.path) {
+                const point = wallMesh.geometry.parameters.path.getPointAt(drawProgress);
+                window.wallHeadGlow.position.copy(point).y += 20;
+                if (rawDrawProgress > 0.8) window.wallHeadGlow.intensity = phase === 0 ? 3 * (1 - (rawDrawProgress - 0.8) / 0.2) : 0;
+            }
+
+            counter.innerText = (drawProgress * 155).toFixed(2);
+            updateLabels(phase);
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        init();
+    </script>
+</body>
+</html>

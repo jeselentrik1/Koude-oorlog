@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USSR Economic Stagnation - 3D Graph</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #020202;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+        }
+
+        #container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Narrative Overlays */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 4rem;
+            box-sizing: border-box;
+        }
+
+        .narrative {
+            position: absolute;
+            top: 4rem;
+            left: 4rem;
+            max-width: 100%;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 1.85s cubic-bezier(0.22, 1, 0.36, 1);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+        }
+
+        .narrative.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .narrative.exit {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+
+        h1 {
+            font-size: 4.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            line-height: 0.9;
+            margin: 0 0 1.5rem 0;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 3rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            line-height: 1;
+            margin: 0 0 1rem 0;
+            letter-spacing: -0.02em;
+        }
+
+        p {
+            font-size: 1.5rem;
+            color: #cbd5e1; /* slate-300 */
+            margin: 0 0 0.5rem 0;
+            line-height: 1.4;
+        }
+
+        .accent {
+            color: #ef4444; /* red-500 */
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .italic {
+            font-style: italic;
+            color: #ffffff;
+        }
+
+        .divider {
+            height: 1px;
+            background: #1e293b; /* slate-800 */
+            margin: 1.5rem 0;
+        }
+
+        /* Years indicator on the bottom right */
+        #year-indicator {
+            position: absolute;
+            bottom: 4rem;
+            right: 4rem;
+            text-align: right;
+            z-index: 10;
+            opacity: 1; /* Always visible now */
+            transition: opacity 1s ease;
+        }
+
+        #year-number {
+            font-size: 6rem;
+            font-weight: 900;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.05em;
+        }
+
+        #year-label {
+            color: #ef4444;
+            font-weight: 700;
+            letter-spacing: 0.3em;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container"></div>
+
+    <div id="ui-layer">
+        <!-- Phase 0 -->
+        <div id="phase-0" class="narrative">
+            <h1>De Ineenstorting</h1>
+        </div>
+
+        <!-- Phase 1 -->
+        <div id="phase-1" class="narrative">
+            <h2>Jaren '80</h2>
+            <p>Nieuwe wapenwedloop drijft de kosten op.</p>
+            <p class="italic">"Star Wars" (Ronald Reagan).</p>
+        </div>
+
+        <!-- Phase 2 -->
+        <div id="phase-2" class="narrative">
+            <h2>Stagnatie</h2>
+            <p>De Sovjet-economie gaat failliet onder de onhoudbare druk.</p>
+        </div>
+
+        <!-- Phase 3 -->
+        <div id="phase-3" class="narrative">
+            <span class="accent">Grote tekorten</span>
+            <h2>Verval</h2>
+            <p>Lege supermarktschappen, ontevreden burgers en hoop op verandering.</p>
+        </div>
+
+        <!-- Phase 4 -->
+        <div id="phase-4" class="narrative">
+            <h2>USSR 1991</h2>
+            <p>Het einde van een tijdperk.</p>
+        </div>
+    </div>
+
+    <div id="year-indicator">
+        <div id="year-number">1980</div>
+        <div id="year-label">JAARTAL</div>
+    </div>
+
+    <!-- Three.js and Post-Processing Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+    <script>
+        let scene, camera, renderer, composer;
+        let startTimestamp = null;
+        let graphTube, glowPoint, curve;
+        let currentPhase = -1;
+        let targetStage = 0;
+        let currentStageLerp = 0;
+        let userHasInteracted = false;
+        /** Tube & head draw along curve before first input (0 … STAGES[0].progress). */
+        let introDrawProgress = 0;
+
+        // Stage Configuration
+        const STAGES = [
+            { // 0: Intro
+                progress: 0.15,
+                camPos: (pt) => new THREE.Vector3(pt.x - 35, 25, pt.z + 45),
+                lookAt: (pt) => new THREE.Vector3(pt.x + 20, 5, 0)
+            },
+            { // 1: Jaren '80
+                progress: 0.65,
+                camPos: (pt) => new THREE.Vector3(pt.x - 35, 15, pt.z + 40),
+                lookAt: (pt) => new THREE.Vector3(pt.x + 10, 8, 0)
+            },
+            { // 2: Stagnatie
+                progress: 0.82,
+                camPos: (pt) => new THREE.Vector3(pt.x - 20, 12, pt.z + 35),
+                lookAt: (pt) => new THREE.Vector3(pt.x + 5, 10, 0)
+            },
+            { // 3: Verval / Collapse
+                progress: 1.0,
+                camPos: (pt) => new THREE.Vector3(pt.x - 10, 10, pt.z + 30),
+                lookAt: (pt) => new THREE.Vector3(pt.x, 0, 0)
+            },
+            { // 4: Wide View
+                progress: 1.0,
+                camPos: (pt) => new THREE.Vector3(0, 36, 112),
+                lookAt: (pt) => new THREE.Vector3(0, 4, 0)
+            }
+        ];
+
+        // Data points for the graph (X: Time/Year, Y: Economic Output, Z: Depth)
+        // Let's say X goes from -50 (1960) to +50 (1991)
+        const curvePoints = [];
+        const yearMap = [];
+        
+        function smootherstep01(t) {
+            const x = Math.min(1, Math.max(0, t));
+            return x * x * x * (x * (x * 6 - 15) + 10);
+        }
+
+        /** Piecewise curve through historically ordered eras; knots chosen for visible peaks/troughs, smoothly blended (no straight-line spans). */
+        function mapYearToOutput(year) {
+            const knots = [
+                [1960, 0.0],
+                [1965, 4.2],
+                [1969, 9.8],
+                [1970, 11.4],
+                [1975, 16.8],
+                [1978, 12.2],
+                [1980, 14.55],
+                [1982.25, 13.85],
+                [1984, 15.05],
+                [1985, 14.05],
+                [1986, 12.4],
+                [1987, 9.5],
+                [1989, 3.8],
+                [1990, -1.9],
+                [1991, -5.4],
+            ];
+
+            if (year <= knots[0][0]) return knots[0][1];
+            const last = knots[knots.length - 1];
+            if (year >= last[0]) return last[1];
+
+            for (let i = 0; i < knots.length - 1; i++) {
+                const [y0, v0] = knots[i];
+                const [y1, v1] = knots[i + 1];
+                if (year <= y1) {
+                    const t = (year - y0) / (y1 - y0);
+                    const e = smootherstep01(t);
+                    let v = v0 + (v1 - v0) * e;
+                    // Micro ripple (not in 1980–1985 jaren‑80 / stagnatie plateau)
+                    if (year < 1980 || year > 1985) {
+                        v += 0.22 * Math.sin(year * 1.15) + 0.08 * Math.sin(year * 2.4);
+                    }
+                    return v;
+                }
+            }
+            return last[1];
+        }
+
+        for (let y = 1960; y <= 1991; y += 0.1) {
+            const xPos = (y - 1975.5) * 4; // Center around 1975
+            const yPos = mapYearToOutput(y);
+            // Slight curve in Z for dramatic 3D depth
+            const zPos =
+                Math.sin((y - 1960) * 0.1) * 7.2 +
+                (y < 1980 || y > 1985
+                    ? 1.1 * Math.sin((y - 1960) * 0.22)
+                    : 0.55 * Math.sin(((y - 1980) / 5) * Math.PI)); 
+            
+            curvePoints.push(new THREE.Vector3(xPos, yPos, zPos));
+            yearMap.push({ x: xPos, year: y });
+        }
+
+        function init() {
+            const container = document.getElementById('container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x020202);
+            scene.fog = new THREE.FogExp2(0x020202, 0.015);
+            
+            // Dramatic FOV
+            camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2; 
+            container.appendChild(renderer.domElement);
+
+            // POST-PROCESSING: Bloom for the glowing graph
+            const renderScene = new THREE.RenderPass(scene, camera);
+            const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.35, 0.85);
+            bloomPass.threshold = 0.12;
+            bloomPass.strength = 1.12;
+            bloomPass.radius = 0.48;
+
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+
+            // LIGHTING
+            const ambient = new THREE.AmbientLight(0xffffff, 0.05);
+            scene.add(ambient);
+
+            // Build the graph
+            buildGraph();
+
+            const introPt = curve.getPointAt(Math.max(STAGES[0].progress, 0.001));
+            camera.position.copy(STAGES[0].camPos(introPt));
+            window.currentLookAt = STAGES[0].lookAt(introPt).clone();
+            camera.lookAt(window.currentLookAt);
+
+            window.addEventListener('resize', onWindowResize, false);
+            window.addEventListener('keydown', onKeyDown, false);
+            window.addEventListener('pointerdown', onFirstInteraction, false);
+            
+            requestAnimationFrame(animate);
+        }
+
+        function onFirstInteraction() {
+            if (userHasInteracted) return;
+            userHasInteracted = true;
+            introDrawProgress = STAGES[0].progress;
+            if (graphTube && graphTube.material.userData.shader) {
+                graphTube.material.userData.shader.uniforms.progress.value = Math.max(introDrawProgress, STAGES[0].progress);
+            }
+        }
+
+        function onKeyDown(event) {
+            if (!userHasInteracted) {
+                onFirstInteraction();
+            }
+            if (event.key === 'ArrowRight') {
+                targetStage = Math.min(targetStage + 1, STAGES.length - 1);
+            } else if (event.key === 'ArrowLeft') {
+                targetStage = Math.max(targetStage - 1, 0);
+            }
+        }
+
+        function createTextLabel(text, x, y, z) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 256;
+            context.fillStyle = 'rgba(0,0,0,0)';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.font = 'bold 100px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillStyle = '#ffffff';
+            context.save();
+            context.translate(canvas.width / 2, canvas.height / 2);
+            context.scale(-1, -1);
+            context.fillText(text, 0, 0);
+            context.restore();
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.MeshBasicMaterial({ 
+                map: texture, 
+                transparent: true, 
+                opacity: 0.4,
+                side: THREE.DoubleSide
+            });
+            const geometry = new THREE.PlaneGeometry(8, 4);
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, y, z);
+            mesh.rotation.x = -Math.PI / 2; // Lay flat on the ground
+            mesh.rotation.z = Math.PI / 2;  // Perpendicular to the lines (which are along Z)
+            return mesh;
+        }
+
+        function buildGraph() {
+            // Ground Grid to give sense of scale and "data" vibe
+            const gridGeo = new THREE.PlaneGeometry(300, 100, 60, 20);
+            const gridMat = new THREE.MeshBasicMaterial({ 
+                color: 0x111111, 
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const grid = new THREE.Mesh(gridGeo, gridMat);
+            grid.rotation.x = -Math.PI / 2;
+            grid.position.y = -2;
+            scene.add(grid);
+
+            // The Glowing Tube Graph
+            curve = new THREE.CatmullRomCurve3(curvePoints);
+            // Increase segments for much smoother interpolation
+            const tubeGeo = new THREE.TubeGeometry(curve, 500, 0.4, 16, false);
+            const tubeMat = new THREE.MeshStandardMaterial({
+                color: 0xd80000,
+                emissive: 0xff0303,
+                emissiveIntensity: 1.95,
+                roughness: 0.35,
+                metalness: 0.45,
+                transparent: true
+            });
+            
+            // Add custom shader to draw the tube over time
+            tubeMat.onBeforeCompile = (shader) => {
+                shader.uniforms.progress = { value: 0 };
+                shader.vertexShader = `
+                    varying float vLineProgress;
+                    attribute float lineProgress;
+                    ${shader.vertexShader}
+                `.replace(`#include <begin_vertex>`, `#include <begin_vertex>\nvLineProgress = lineProgress;`);
+                
+                shader.fragmentShader = `
+                    uniform float progress;
+                    varying float vLineProgress;
+                    ${shader.fragmentShader}
+                `.replace(
+                    `#include <dithering_fragment>`,
+                    `#include <dithering_fragment>\nif (vLineProgress > progress) discard;`
+                );
+                tubeMat.userData.shader = shader;
+            };
+
+            const numVertices = tubeGeo.attributes.position.count;
+            const progressAttr = new Float32Array(numVertices);
+            const radialSegments = tubeGeo.parameters.radialSegments;
+            const tubularSegments = tubeGeo.parameters.tubularSegments;
+            for (let i = 0; i <= tubularSegments; i++) {
+                for (let j = 0; j <= radialSegments; j++) {
+                    const index = i * (radialSegments + 1) + j;
+                    if (index < numVertices) progressAttr[index] = i / tubularSegments;
+                }
+            }
+            tubeGeo.setAttribute('lineProgress', new THREE.BufferAttribute(progressAttr, 1));
+
+            graphTube = new THREE.Mesh(tubeGeo, tubeMat);
+            scene.add(graphTube);
+
+            // Glowing point at the 'head' of the timeline
+            glowPoint = new THREE.PointLight(0xff0a0a, 2.8, 50);
+            scene.add(glowPoint);
+            
+            // Add a leading sphere
+            const sphereGeo = new THREE.SphereGeometry(0.8, 16, 16);
+            const sphereMat = new THREE.MeshBasicMaterial({ color: 0xffd0d0 });
+            const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+            glowPoint.add(sphere);
+
+            // Year markers on the grid
+            // We use simple glowing lines on the ground to mark decades
+            [1960, 1965, 1970, 1975, 1980, 1985, 1991].forEach(year => {
+                const x = (year - 1975.5) * 4;
+                const lineGeo = new THREE.BoxGeometry(0.2, 0.1, 40);
+                const lineMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+                const line = new THREE.Mesh(lineGeo, lineMat);
+                line.position.set(x, -1.9, 0);
+                scene.add(line);
+
+                // Add 3D text label - positioned flat on ground
+                const label = createTextLabel(year.toString(), x, -1.85, 24);
+                scene.add(label);
+            });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Narrative phasing logic
+        function setPhase(newPhase) {
+            if (currentPhase === newPhase) return;
+            
+            if (currentPhase !== -1) {
+                const oldEl = document.getElementById(`phase-${currentPhase}`);
+                if (oldEl) {
+                    oldEl.classList.remove('active');
+                    oldEl.classList.add('exit');
+                }
+            }
+
+            currentPhase = newPhase;
+
+            if (currentPhase !== -1) {
+                const newEl = document.getElementById(`phase-${currentPhase}`);
+                if (newEl) {
+                    newEl.classList.remove('exit');
+                    // small timeout to allow display/DOM update
+                    setTimeout(() => newEl.classList.add('active'), 50);
+                }
+            }
+
+            // Show/Hide Year Indicator
+            const yearInd = document.getElementById('year-indicator');
+            yearInd.style.opacity = '1';
+        }
+
+        function animate(timestamp) {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const elapsed = timestamp - startTimestamp;
+
+            if (!userHasInteracted) {
+                currentStageLerp = 0;
+                targetStage = Math.min(targetStage, STAGES.length - 1);
+            } else {
+                // Slightly slower 0 → 1 than other steps (inFirstSegment); rest unchanged
+                const STAGE_LERP_FIRST = 0.00715;
+                const STAGE_LERP_REST = 0.022;
+                const settledAtIntro = targetStage === 0 && currentStageLerp < 0.015;
+                let inFirstSegment = !settledAtIntro && currentStageLerp < 1;
+                const lerpFactor = inFirstSegment ? STAGE_LERP_FIRST : STAGE_LERP_REST;
+                currentStageLerp = THREE.MathUtils.lerp(currentStageLerp, targetStage, lerpFactor);
+            }
+
+            const settledAtIntroAfter = userHasInteracted && targetStage === 0 && currentStageLerp < 0.015;
+            let inFirstSegment = userHasInteracted && !settledAtIntroAfter && currentStageLerp < 1;
+            const camLerp = !userHasInteracted ? 0.01 : (inFirstSegment ? 0.0142 : 0.026);
+            
+            // Map stage to narrative phase
+            setPhase(Math.floor(currentStageLerp + 0.5));
+
+            const targetPos = new THREE.Vector3();
+            const lookAtPos = new THREE.Vector3();
+            
+            // Calculate current stage parameters by interpolating between neighboring stages
+            const stageIndex = Math.floor(currentStageLerp);
+            const nextStageIndex = Math.min(stageIndex + 1, STAGES.length - 1);
+            const stageAlpha = currentStageLerp - stageIndex;
+            
+            const stageA = STAGES[stageIndex];
+            const stageB = STAGES[nextStageIndex];
+            
+            const graphProgress = THREE.MathUtils.lerp(stageA.progress, stageB.progress, stageAlpha);
+            const currentPt = curve.getPointAt(Math.max(graphProgress, 0.001));
+            
+            const posA = stageA.camPos(currentPt);
+            const posB = stageB.camPos(currentPt);
+            const lookA = stageA.lookAt(currentPt);
+            const lookB = stageB.lookAt(currentPt);
+            
+            targetPos.lerpVectors(posA, posB, stageAlpha);
+            lookAtPos.lerpVectors(lookA, lookB, stageAlpha);
+
+            if (!userHasInteracted) {
+                const introGraphPt = curve.getPointAt(Math.max(STAGES[0].progress, 0.001));
+                const basePos = STAGES[0].camPos(introGraphPt);
+                const baseLook = STAGES[0].lookAt(introGraphPt);
+                const t = elapsed * 0.00011;
+                const t2 = elapsed * 0.00007;
+                targetPos.copy(basePos).add(new THREE.Vector3(
+                    Math.sin(t) * 4.2,
+                    Math.sin(t2) * 1.8,
+                    Math.cos(t * 0.85) * 3.5
+                ));
+                lookAtPos.copy(baseLook).add(new THREE.Vector3(
+                    Math.sin(t * 0.7) * 1.2,
+                    Math.sin(t2 * 0.6) * 0.6,
+                    Math.cos(t * 0.55) * 0.9
+                ));
+            }
+
+            camera.position.lerp(targetPos, camLerp);
+            if (!window.currentLookAt) window.currentLookAt = new THREE.Vector3(-30, 5, 0);
+            window.currentLookAt.lerp(lookAtPos, camLerp);
+            camera.lookAt(window.currentLookAt);
+
+            // Animate Graph Head
+            if (graphTube && curve) {
+                const introTarget = STAGES[0].progress;
+                if (!userHasInteracted) {
+                    introDrawProgress = THREE.MathUtils.lerp(introDrawProgress, introTarget, 0.00695);
+                } else {
+                    introDrawProgress = introTarget;
+                }
+                const tubeClipProgress = userHasInteracted ? graphProgress : introDrawProgress;
+                const headProgress = tubeClipProgress;
+
+                const drawPt = curve.getPointAt(Math.max(headProgress, 0.001));
+                
+                if (drawPt) {
+                    glowPoint.position.copy(drawPt);
+                    
+                    // Pulse the intensity based on stage
+                    let intensityPulse = 0;
+                    if (!userHasInteracted) {
+                        intensityPulse = Math.sin(elapsed * 0.0025) * 0.35;
+                    } else if (targetStage >= 2 && targetStage < 4) {
+                        intensityPulse = (Math.random() - 0.5) * 1.5; // Flickering failure
+                    } else {
+                        intensityPulse = Math.sin(elapsed * 0.005) * 0.5;
+                    }
+                    glowPoint.intensity = 2.0 + intensityPulse;
+                }
+
+                // Update the tube drawing shader
+                if (graphTube.material.userData.shader) {
+                    graphTube.material.userData.shader.uniforms.progress.value = tubeClipProgress;
+                }
+
+                // Update HUD year from graph position; final wide shot (phase 4) locks to 1991
+                const narrativePhase = Math.floor(currentStageLerp + 0.5);
+                let hudYear = Math.round(drawPt.x / 4 + 1975.5);
+                if (narrativePhase >= 4) {
+                    hudYear = 1991;
+                }
+                hudYear = Math.min(1991, Math.max(1960, hudYear));
+                document.getElementById('year-number').innerText = hudYear;
+            }
+
+            // Render
+            composer.render();
+            requestAnimationFrame(animate);
+        }
+
+        init();
+    </script>
+</body>
+</html>

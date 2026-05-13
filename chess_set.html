@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wooden Chess Set - Cinematic</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #020202;
+            overflow: hidden;
+        }
+
+        #container {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script>
+        let scene, camera, renderer, model;
+        let startTimestamp = null;
+        const container = document.getElementById('container');
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x020202);
+            
+            // Tight FOV (15) for even more dramatic macro-photography compression
+            camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            // Start moderately wide (matches intro t=0: radius 8, height 5.6)
+            camera.position.set(8, 5.6, 0.01);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            // Cinematic Color & Light Handling
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.05; 
+            renderer.physicallyCorrectLights = true;
+            
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // --- CINEMATIC LIGHTING ---
+            // Low ambient — lifts shadow detail slightly; bulb is still the hero
+            const ambient = new THREE.AmbientLight(0x141820, 0.012);
+            scene.add(ambient);
+
+            // Pendant bulb — keep distance > |bulbY| to floor or the board gets zero light
+            const bulbY = 1.28;
+            const bulbGroup = new THREE.Group();
+            bulbGroup.position.set(0, bulbY, 0);
+            scene.add(bulbGroup);
+
+            const bulbPoint = new THREE.PointLight(0xfff2e6, 35, 1.33);
+            bulbPoint.decay = 2;
+            bulbPoint.castShadow = false;
+            bulbPoint.shadow.mapSize.set(1024, 1024);
+            bulbPoint.shadow.bias = -0.00025;
+            bulbPoint.shadow.normalBias = 0.08;
+            bulbPoint.shadow.camera.near = 0.2;
+            bulbPoint.shadow.camera.far = 40;
+            bulbGroup.add(bulbPoint);
+
+            // Load Model
+            const loader = new THREE.GLTFLoader();
+            loader.load('wooden_chess_set.glb', (gltf) => {
+                model = gltf.scene;
+
+                const box0 = new THREE.Box3().setFromObject(model);
+                const size0 = box0.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size0.x, size0.y, size0.z);
+                model.scale.setScalar(1 / maxDim);
+                model.updateMatrixWorld(true);
+
+                // Center on XZ
+                const box1 = new THREE.Box3().setFromObject(model);
+                const c = box1.getCenter(new THREE.Vector3());
+                model.position.x -= c.x;
+                model.position.z -= c.z;
+                model.updateMatrixWorld(true);
+
+                // Rest bottom of board/set on the floor (fixes "floating" shadow)
+                const box2 = new THREE.Box3().setFromObject(model);
+                model.position.y -= box2.min.y;
+                model.updateMatrixWorld(true);
+
+                model.traverse((node) => {
+                    if (node.isMesh) {
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                        if (node.material) {
+                            node.material.envMapIntensity = 0.55;
+                            node.material.roughness = Math.max(node.material.roughness, 0.2);
+                        }
+                    }
+                });
+
+                scene.add(model);
+                requestAnimationFrame(animate);
+            });
+
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate(timestamp) {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const elapsed = timestamp - startTimestamp;
+            
+            // ANIMATION CONSTANTS
+            const INTRO_DURATION = 8000; // Slower, more majestic intro
+            const ORBIT_SPEED = 0.0001;  // Even slower orbit
+            
+            let targetPos = new THREE.Vector3();
+            let lookAtPos = new THREE.Vector3(0, 0, 0);
+
+            if (elapsed < INTRO_DURATION) {
+                // Phase 0: Dramatic Zoom In
+                const p = elapsed / INTRO_DURATION;
+                // Custom cubic ease for weight
+                const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+                
+                const angle = ease * Math.PI * 0.4;
+                const radius = 8 - (ease * 5.1);    // Start closer; end ~2.9 (slightly less zoom)
+                const height = 5.6 - (ease * 3.55); // Higher pass; end ~2.05 high
+                
+                targetPos.set(
+                    Math.cos(angle) * radius,
+                    height,
+                    Math.sin(angle) * radius
+                );
+            } else {
+                // Phase 1: Majestic Orbit
+                const orbitTime = elapsed - INTRO_DURATION;
+                const angle = (Math.PI * 0.4) + (orbitTime * ORBIT_SPEED);
+                const radius = 2.9 + Math.sin(orbitTime * 0.0001) * 0.3; 
+                const height = 2.05 + Math.cos(orbitTime * 0.00015) * 0.2;
+                
+                targetPos.set(
+                    Math.cos(angle) * radius,
+                    height,
+                    Math.sin(angle) * radius
+                );
+            }
+
+            // EXTREMELY SMOOTH LERPING (even slower for majesty)
+            camera.position.lerp(targetPos, 0.01);
+            camera.lookAt(lookAtPos);
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        init();
+    </script>
+</body>
+</html>

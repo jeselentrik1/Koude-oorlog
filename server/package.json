@@ -1,0 +1,14 @@
+{
+  "name": "server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "NODE_ENV=development node --watch index.js",
+    "start": "NODE_ENV=production node index.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
