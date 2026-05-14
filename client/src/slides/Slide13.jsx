@@ -1,4 +1,5 @@
 import Slide from '../components/Slide';
+import migImage from '../assets/mig_23.jpg';
 
 export default function Slide13() {
   return (
@@ -16,11 +17,13 @@ export default function Slide13() {
           </div>
         </div>
         <div className="w-1/2 flex items-center justify-center p-12">
-          <div className="relative w-full aspect-[4/3] bg-slate-900 border border-slate-800 p-4 transform -rotate-2">
-            <div className="w-full h-full bg-slate-800 flex items-center justify-center text-8xl grayscale contrast-125">
-              ✈️
-            </div>
-            <div className="absolute bottom-6 right-6 text-slate-500 font-mono text-sm">MIG-23 // SOVIET AIR FORCE</div>
+          <div className="relative w-full aspect-[4/3] bg-slate-900 border border-slate-800 transform -rotate-2 overflow-hidden">
+            <img 
+              src={migImage} 
+              alt="MiG-23" 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-4 right-4 text-white/70 font-mono text-sm bg-black/50 px-2 py-1 backdrop-blur-sm">MIG-23 // SOVIET AIR FORCE</div>
           </div>
         </div>
       </div>

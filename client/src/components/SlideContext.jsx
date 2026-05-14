@@ -8,6 +8,8 @@ export const SlideContext = createContext({
   setBackground: () => {},
   goToNextSlide: () => {},
   goToPrevSlide: () => {},
+  presentationMode: 'without-questions',
+  activeInterstitial: null,
 });
 
 export const useSlideContext = () => useContext(SlideContext);

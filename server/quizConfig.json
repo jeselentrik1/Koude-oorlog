@@ -1,0 +1,49 @@
+{
+  "questions": [
+    {
+      "id": "q_navo",
+      "question": "Waarvoor staat de afkorting NAVO?",
+      "type": "multiple-choice",
+      "options": ["Noord-Atlantische Verdragsorganisatie", "Noord-Atlantische Veiligheids-Organisatie", "Nationaal Ambtelijk Verbond voor Ontwikkeling", "Neutraal Alliantie-Verbond voor Opvang"],
+      "answer": "Noord-Atlantische Verdragsorganisatie",
+      "timeLimit": 20,
+      "doublePoints": false
+    },
+    {
+      "id": "q_berlin_wall",
+      "question": "Hoe lang was de Berlijnse Muur in totaal?",
+      "type": "multiple-choice",
+      "options": ["155km", "135km", "165km", "180km"],
+      "answer": "155km",
+      "timeLimit": 20,
+      "doublePoints": false
+    },
+    {
+      "id": "q_mi6",
+      "question": "Wie is de inlichtingendienst van het Verenigd Koninkrijk?",
+      "type": "multiple-choice",
+      "options": ["MI6", "CIA", "FBI", "KGB"],
+      "answer": "MI6",
+      "timeLimit": 15,
+      "doublePoints": false
+    },
+    {
+      "id": "q_ussr_fall",
+      "question": "In welk jaar werd de Sovjet-Unie (USSR) officieel ontbonden?",
+      "type": "multiple-choice",
+      "options": ["1991", "1989", "1990", "1992"],
+      "answer": "1991",
+      "timeLimit": 20,
+      "doublePoints": false
+    },
+    {
+      "id": "q_bonus",
+      "question": "Hoe heette de politiek van 'openheid' die Gorbatsjov introduceerde in de jaren 80?",
+      "type": "multiple-choice",
+      "options": ["Glasnost", "Perestrojka", "Demokratizatsiya", "Uskoreniye"],
+      "answer": "Glasnost",
+      "timeLimit": 25,
+      "doublePoints": true
+    }
+  ]
+}

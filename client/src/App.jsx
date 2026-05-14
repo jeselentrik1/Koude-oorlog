@@ -1,4 +1,7 @@
 import Presentation from './components/Presentation';
+import KahootApp from './kahoot/KahootApp';
+import KahootHostTest from './kahoot/KahootHostTest';
+import { useState, useEffect } from 'react';
 
 // Import all 34 slides
 import Slide1 from './slides/Slide1';
@@ -44,10 +47,68 @@ const slides = [
   Slide31, Slide32, Slide33, Slide34
 ];
 
+// Interactive sections to insert between slides
+import KahootHost from './kahoot/KahootHost';
+
+const interstitials = [
+  // First interstitial is the Lobby before the presentation starts
+  { 
+    atIndex: 0, 
+    component: ({ onComplete }) => <KahootHost isLobby={true} onComplete={onComplete} />
+  },
+  { 
+    atIndex: 9, 
+    component: ({ onComplete }) => <KahootHost questionId="q_navo" onComplete={onComplete} />
+  },
+  { 
+    atIndex: 15, 
+    component: ({ onComplete }) => <KahootHost questionId="q_berlin_wall" onComplete={onComplete} />
+  },
+  { 
+    atIndex: 22, 
+    component: ({ onComplete }) => <KahootHost questionId="q_mi6" onComplete={onComplete} />
+  },
+  { 
+    atIndex: 25, 
+    component: ({ onComplete }) => <KahootHost questionId="q_ussr_fall" onComplete={onComplete} />
+  },
+  { 
+    atIndex: 33, 
+    component: ({ onComplete }) => <KahootHost questionId="q_bonus" onComplete={onComplete} />
+  }
+];
+
 function App() {
-  return (
-    <Presentation slides={slides} />
-  );
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
+
+  if (currentPath === '/present') {
+    return <Presentation 
+      slides={slides} 
+      interstitials={interstitials}
+      navigate={(path) => {
+        window.history.pushState({}, '', path);
+        setCurrentPath(path);
+      }} 
+    />;
+  }
+
+  if (currentPath === '/host-test') {
+    return <KahootHostTest />;
+  }
+
+  return <KahootApp navigate={(path) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+  }} />;
 }
 
 export default App;
