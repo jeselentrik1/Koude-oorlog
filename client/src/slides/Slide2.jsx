@@ -1,4 +1,5 @@
 import Slide from '../components/Slide';
+import nuclearTest from '../assets/nuclear_test.png';
 
 export default function Slide2() {
   return (
@@ -6,22 +7,23 @@ export default function Slide2() {
       <div className="flex h-full">
         <div className="w-1/2 flex flex-col justify-center pr-12 border-r border-white/5">
           <h2 className="text-5xl font-black mb-8 text-white uppercase tracking-tighter">Wat was de Koude Oorlog?</h2>
-          <ul className="space-y-6 text-2xl text-slate-400">
-            <li className="flex items-start">
-              <span className="text-red-700 mr-4 font-black">/</span>
+          <div className="space-y-6 text-2xl text-slate-300">
+            <div className="flex items-start">
+              <span className="text-red-600 mr-4 font-black">❯</span>
               <span>Periode van wereldwijde spanning</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-red-700 mr-4 font-black">/</span>
+            </div>
+            <div className="flex items-start">
+              <span className="text-red-600 mr-4 font-black">❯</span>
               <span>Na WOII tot begin jaren 90</span>
-            </li>
-            <li className="flex items-start">
-              <span className="text-red-700 mr-4 font-black">/</span>
+            </div>
+            <div className="flex items-start">
+              <span className="text-red-600 mr-4 font-black">❯</span>
               <span>Twee grootmachten lijnrecht tegenover elkaar</span>
-            </li>
-          </ul>
+            </div>
+          </div>
         </div>
         <div className="w-1/2 flex flex-col justify-center pl-12 items-center">
+          <img src={nuclearTest} alt="Nuclear Test" className="w-full max-w-2xl mb-12 rounded-lg border border-white/10 shadow-2xl" />
           <div className="relative w-full py-8">
             <div className="h-px bg-white/20 w-full absolute top-[calc(2rem+8px)]" />
             <div className="flex justify-between relative">

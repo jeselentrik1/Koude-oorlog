@@ -55,7 +55,6 @@ const slideMetadata = {
   11: { isSection: true, background: { image: berlinWallImg, brightness: 0.52 } },
   16: { isSection: true, background: { image: nuclearImg, brightness: 0.3 } },
   22: { isSection: true },
-  4: { background: { color: '#050505', plain: true } },
   23: { background: { color: '#020202', plain: true } },
 };
 

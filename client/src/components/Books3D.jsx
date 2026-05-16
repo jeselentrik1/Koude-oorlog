@@ -4,7 +4,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CONFIG = {
-  bg: 0x050505,
   ambientIntensity: 0.08 * Math.PI,
   keyIntensity: 5.2 * Math.PI,
   focusKeyIntensity: 7.8 * Math.PI,
@@ -33,7 +32,7 @@ export default function Books3D({ phase = 0 }) {
     if (!container) return;
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(CONFIG.bg, 0.04);
+    // scene.fog = new THREE.FogExp2(0x050505, 0.04);
 
     const getSize = () => ({
       w: container.clientWidth || window.innerWidth,
@@ -324,7 +323,7 @@ export default function Books3D({ phase = 0 }) {
   const current = slideContent[phase];
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-[#050505]">
+    <div className="relative w-full h-full overflow-hidden">
       <div ref={containerRef} className="absolute inset-0 z-0" />
       
       <div className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-center">

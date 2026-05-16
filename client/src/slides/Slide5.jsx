@@ -50,7 +50,7 @@ export default function Slide5() {
 
   return (
     <motion.div
-      className="absolute inset-0 w-full h-full min-h-0 bg-[#050505] overflow-hidden"
+      className="absolute inset-0 w-full h-full min-h-0 overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: isExiting ? 0 : 1 }}
       exit={{ opacity: 0 }}
