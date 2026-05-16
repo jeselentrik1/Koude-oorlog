@@ -22,7 +22,7 @@ function slideIndexFromSearch(search, slideCount) {
   }
 }
 
-export default function Presentation({ slides, interstitials = [], navigate }) {
+export default function Presentation({ slides, slideMetadata = {}, interstitials = [], navigate }) {
   const [isStarted, setIsStarted] = useState(() => {
     if (typeof window === 'undefined') return false;
     const params = new URLSearchParams(window.location.search);
@@ -39,8 +39,27 @@ export default function Presentation({ slides, interstitials = [], navigate }) {
   );
   const [direction, setDirection] = useState(1);
   const [background, setBackground] = useState(null);
+  const [lastSectionBackground, setLastSectionBackground] = useState(null);
   const [scale, setScale] = useState(1);
   const [activeInterstitial, setActiveInterstitial] = useState(null);
+
+  // Update lastSectionBackground based on slide sequence
+  useEffect(() => {
+    let lastBg = null;
+    for (let i = 0; i <= currentSlideIndex; i++) {
+      if (slideMetadata[i]?.isSection && slideMetadata[i]?.background) {
+        lastBg = slideMetadata[i].background;
+      }
+    }
+    setLastSectionBackground(lastBg);
+    
+    // Also check if current slide has its own specific background defined in metadata
+    if (slideMetadata[currentSlideIndex]?.background) {
+      setBackground(slideMetadata[currentSlideIndex].background);
+    } else {
+      setBackground(null);
+    }
+  }, [currentSlideIndex, slideMetadata]);
 
   useEffect(() => {
     fetch('/api/health')
@@ -136,6 +155,7 @@ export default function Presentation({ slides, interstitials = [], navigate }) {
       totalSlides: slides.length, 
       background, 
       setBackground,
+      lastSectionBackground,
       goToNextSlide,
       goToPrevSlide,
       presentationMode: selectedOption,
@@ -168,7 +188,7 @@ export default function Presentation({ slides, interstitials = [], navigate }) {
             }}
           >
             <div className="noise" />
-            <Background background={background} />
+            <Background background={background} lastSectionBackground={lastSectionBackground} />
             
             <div className="relative z-10 w-full h-full">
               {!isStarted ? (

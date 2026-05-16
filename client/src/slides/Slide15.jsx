@@ -1,25 +1,33 @@
 import Slide from '../components/Slide';
-import berlinWallImg from '../assets/berlin_wall.jpeg';
+import familiesImage from '../assets/families.jpg';
 
 export default function Slide15() {
   return (
-    <Slide 
-      background={{ image: berlinWallImg, brightness: 0.52 }}
-      className="text-white flex flex-col justify-center items-center"
-    >
-      <div className="relative z-10 text-center">
-        <div className="text-red-700 font-black uppercase tracking-[0.6em] text-2xl mb-8 drop-shadow-md">Deel 2</div>
-        <h2 className="text-8xl font-black uppercase tracking-tighter max-w-5xl drop-shadow-2xl">
-          De Berlijnse Muur
-        </h2>
-        <div className="mt-16 h-3 w-64 bg-white/10 mx-auto relative overflow-hidden">
-          <div className="absolute inset-0 bg-red-800/50" />
+    <Slide className=" text-white">
+      <div className="flex h-full items-center">
+        <div className="w-1/2 flex items-center justify-center p-12">
+          <div className="relative w-full">
+             <img 
+               src={familiesImage} 
+               alt="Families gescheiden door de muur" 
+               className="w-full h-auto rounded-lg shadow-2xl opacity-70"
+             />
+          </div>
+        </div>
+        <div className="w-1/2 flex flex-col justify-center pl-12 border-l border-slate-800">
+          <div className="mb-4 text-slate-500 font-bold uppercase tracking-widest text-xl">Muurziek</div>
+          <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter">Leven in Angst</h2>
+          <div className="space-y-6 text-2xl text-slate-300">
+            <p>Families bruut van elkaar gescheiden.</p>
+            <p className="text-white font-bold italic">"De Muurziek"</p>
+            <p>Het verstikkende gevoel van opgesloten te zijn in eigen stad.</p>
+            <div className="h-px bg-slate-800 my-4" />
+            <p className="text-lg text-slate-500 italic">
+              "Sepp mag niet naar het trouwfeest van zijn eigen familie."
+            </p>
+          </div>
         </div>
       </div>
-
-      {/* Industrial framing */}
-      <div className="absolute inset-0 border-[40px] border-black/20 pointer-events-none" />
-      <div className="absolute inset-0 border border-white/5 pointer-events-none" />
     </Slide>
   );
 }

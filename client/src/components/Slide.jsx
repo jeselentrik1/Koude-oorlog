@@ -38,16 +38,19 @@ export default function Slide({
   className = '', 
   variants = defaultVariants, 
   transition = defaultTransition,
-  background = null // Allow passing background config directly
+  background = null
 }) {
   const { setBackground } = useSlideContext();
   const lastBackgroundKeyRef = useRef(null);
 
   useEffect(() => {
-    const key = backgroundKey(background);
-    if (key === lastBackgroundKeyRef.current) return;
-    lastBackgroundKeyRef.current = key;
-    setBackground(background);
+    // Only set background if it was passed as a prop, otherwise use the one from metadata/context
+    if (background) {
+      const key = backgroundKey(background);
+      if (key === lastBackgroundKeyRef.current) return;
+      lastBackgroundKeyRef.current = key;
+      setBackground(background);
+    }
   }, [background, setBackground]);
 
   return (

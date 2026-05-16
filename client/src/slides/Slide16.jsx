@@ -1,86 +1,34 @@
-import { useState, useEffect } from 'react';
-import { useSlideContext } from '../components/SlideContext';
-import BerlinWall3D from '../components/BerlinWall3D';
-import { motion } from 'framer-motion';
+import Slide from '../components/Slide';
+import stasiImage from '../assets/stasi.webp';
 
 export default function Slide16() {
-  const [phase, setPhase] = useState(0);
-  const [phase4WallDrawStarted, setPhase4WallDrawStarted] = useState(false);
-  const { setBackground, goToNextSlide } = useSlideContext();
-  const [isExiting, setIsExiting] = useState(false);
-
-  useEffect(() => {
-    setBackground({ color: '#050608', plain: true });
-  }, [setBackground]);
-
-  useEffect(() => {
-    if (phase !== 4) setPhase4WallDrawStarted(false);
-  }, [phase]);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') {
-        e.stopImmediatePropagation();
-        if (phase === 4 && !phase4WallDrawStarted) {
-          setPhase4WallDrawStarted(true);
-          return;
-        }
-        if (phase < 5) {
-          setPhase((p) => p + 1);
-        }
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        if (phase > 0) {
-          e.stopImmediatePropagation();
-          setPhase((p) => p - 1);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown, true);
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [phase, phase4WallDrawStarted]);
-
-  const handleAdvance = (e) => {
-    e.stopPropagation();
-    if (phase === 4 && !phase4WallDrawStarted) {
-      setPhase4WallDrawStarted(true);
-      return;
-    }
-    if (phase < 5) {
-      setPhase((p) => p + 1);
-    }
-  };
-
-  const handleWallDrawComplete = () => {
-    setPhase(5);
-  };
-
-  const handleFinalPhaseEnd = () => {
-    if (!isExiting) {
-      setIsExiting(true);
-      setTimeout(() => {
-        goToNextSlide();
-      }, 1000);
-    }
-  };
-
   return (
-    <motion.div
-      className="absolute inset-0 w-full h-full min-h-0 bg-[#050608] overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: isExiting ? 0 : 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 1, ease: 'easeInOut' }}
-      onClick={handleAdvance}
-    >
-      <BerlinWall3D
-        phase={phase}
-        phase4WallDrawStarted={phase4WallDrawStarted}
-        onWallDrawComplete={handleWallDrawComplete}
-        onFinalPhaseEnd={handleFinalPhaseEnd}
-      />
-    </motion.div>
+    <Slide className=" text-white">
+      <div className="flex h-full items-center">
+        <div className="w-1/2 flex flex-col justify-center pr-12">
+          <div className="mb-4 text-slate-500 font-bold uppercase tracking-widest text-xl">Muurziek</div>
+          <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter">De Stasi</h2>
+          <div className="space-y-6 text-2xl text-slate-300">
+            <p><span className="text-red-500 font-bold">Ministerium für Staatssicherheit:</span> De ogen en oren van de staat.</p>
+            <p>Extreme controle door afluisteren.</p>
+            <p className="border-l-4 border-slate-500 pl-6 py-2 bg-slate-900/10 italic">
+              Niemand was te vertrouwen, zelfs je geliefde niet.
+            </p>
+            <p className="text-lg text-slate-500 italic mt-8">
+              "Bastian versiert Emma om haar familie te kunnen verraden."
+            </p>
+          </div>
+        </div>
+        <div className="w-1/2 flex items-center justify-center p-12">
+          <div className="relative w-full">
+             <img 
+               src={stasiImage} 
+               alt="Stasi afluisterapparatuur" 
+               className="w-full h-auto rounded-lg shadow-2xl opacity-70"
+             />
+          </div>
+        </div>
+      </div>
+    </Slide>
   );
 }

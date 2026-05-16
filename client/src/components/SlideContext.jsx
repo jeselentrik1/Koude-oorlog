@@ -6,6 +6,7 @@ export const SlideContext = createContext({
   totalSlides: 0,
   background: null,
   setBackground: () => {},
+  lastSectionBackground: null,
   goToNextSlide: () => {},
   goToPrevSlide: () => {},
   presentationMode: 'without-questions',

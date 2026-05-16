@@ -2,16 +2,15 @@ import Slide from '../components/Slide';
 
 export default function Slide29() {
   return (
-    <Slide className=" text-white flex flex-col justify-center items-center">
-      <div className="text-blue-500 font-bold uppercase tracking-[0.5em] text-2xl mb-8">Nu</div>
-      <h2 className="text-8xl font-black uppercase tracking-tighter text-center max-w-5xl">
-        Link met de Actualiteit
-      </h2>
-      <div className="mt-16 h-2 w-48 bg-white/20" />
-      <div className="mt-12 flex space-x-8 opacity-40 grayscale">
-         <div className="text-2xl font-black border-2 border-white px-4 py-2">VRT NWS</div>
-         <div className="text-2xl font-black border-2 border-white px-4 py-2">NATO</div>
-         <div className="text-2xl font-black border-2 border-white px-4 py-2">BBC</div>
+    <Slide className=" text-white flex flex-col justify-center items-center text-center">
+      <div className="text-red-600 text-9xl mb-8 opacity-50">👁</div>
+      <h2 className="text-6xl font-black mb-12 uppercase tracking-tighter">Onze Eigen Visie</h2>
+      <div className="space-y-8 text-3xl text-slate-300 max-w-4xl">
+        <p>"De wapens zijn veranderd, de angst is gebleven."</p>
+        <p className="text-white italic">Digitale muren hebben de betonnen Muur vervangen.</p>
+        <p>De geschiedenis lijkt zich te herhalen, maar nu in een onzichtbare, digitale vorm.</p>
+        <div className="h-1 w-24 bg-red-600 mx-auto my-12" />
+        <p className="text-xl text-slate-500 uppercase tracking-widest font-bold">Informatieoorlog // Paranoia // Verdeeldheid</p>
       </div>
     </Slide>
   );

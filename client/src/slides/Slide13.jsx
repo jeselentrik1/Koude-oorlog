@@ -1,32 +1,86 @@
-import Slide from '../components/Slide';
-import migImage from '../assets/mig_23.jpg';
+import { useState, useEffect } from 'react';
+import { useSlideContext } from '../components/SlideContext';
+import BerlinWall3D from '../components/BerlinWall3D';
+import { motion } from 'framer-motion';
 
 export default function Slide13() {
+  const [phase, setPhase] = useState(0);
+  const [phase4WallDrawStarted, setPhase4WallDrawStarted] = useState(false);
+  const { setBackground, goToNextSlide } = useSlideContext();
+  const [isExiting, setIsExiting] = useState(false);
+
+  useEffect(() => {
+    setBackground({ color: '#050608', plain: true });
+  }, [setBackground]);
+
+  useEffect(() => {
+    if (phase !== 4) setPhase4WallDrawStarted(false);
+  }, [phase]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.stopImmediatePropagation();
+        if (phase === 4 && !phase4WallDrawStarted) {
+          setPhase4WallDrawStarted(true);
+          return;
+        }
+        if (phase < 5) {
+          setPhase((p) => p + 1);
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        if (phase > 0) {
+          e.stopImmediatePropagation();
+          setPhase((p) => p - 1);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [phase, phase4WallDrawStarted]);
+
+  const handleAdvance = (e) => {
+    e.stopPropagation();
+    if (phase === 4 && !phase4WallDrawStarted) {
+      setPhase4WallDrawStarted(true);
+      return;
+    }
+    if (phase < 5) {
+      setPhase((p) => p + 1);
+    }
+  };
+
+  const handleWallDrawComplete = () => {
+    setPhase(5);
+  };
+
+  const handleFinalPhaseEnd = () => {
+    if (!isExiting) {
+      setIsExiting(true);
+      setTimeout(() => {
+        goToNextSlide();
+      }, 1000);
+    }
+  };
+
   return (
-    <Slide className=" text-white">
-      <div className="flex h-full items-center">
-        <div className="w-1/2 flex flex-col justify-center pr-12">
-          <div className="mb-4 text-red-600 font-bold uppercase tracking-widest text-xl">Heldere hemel</div>
-          <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter">De Absurditeit</h2>
-          <div className="space-y-6 text-2xl text-slate-300">
-            <p>Onbemande MiG-23 in Belgisch luchtruim (1989).</p>
-            <p className="border-l-4 border-red-600 pl-6 py-2 bg-red-900/10 italic">
-              Paniek bij de NAVO: Is dit een provocatie? Start van WOIII?
-            </p>
-            <p>Extreme paranoia door decennia van wantrouwen.</p>
-          </div>
-        </div>
-        <div className="w-1/2 flex items-center justify-center p-12">
-          <div className="relative w-full aspect-[4/3] bg-slate-900 border border-slate-800 transform -rotate-2 overflow-hidden">
-            <img 
-              src={migImage} 
-              alt="MiG-23" 
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute bottom-4 right-4 text-white/70 font-mono text-sm bg-black/50 px-2 py-1 backdrop-blur-sm">MIG-23 // SOVIET AIR FORCE</div>
-          </div>
-        </div>
-      </div>
-    </Slide>
+    <motion.div
+      className="absolute inset-0 w-full h-full min-h-0 bg-[#050608] overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: isExiting ? 0 : 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1, ease: 'easeInOut' }}
+      onClick={handleAdvance}
+    >
+      <BerlinWall3D
+        phase={phase}
+        phase4WallDrawStarted={phase4WallDrawStarted}
+        onWallDrawComplete={handleWallDrawComplete}
+        onFinalPhaseEnd={handleFinalPhaseEnd}
+      />
+    </motion.div>
   );
 }

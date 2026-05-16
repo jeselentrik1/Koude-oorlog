@@ -7,16 +7,24 @@
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap");
 
-      body,
-      html {
+      *,
+      *::before,
+      *::after {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
+      }
+
+      body,
+      html {
         width: 100%;
         height: 100%;
         overflow: hidden;
         background-color: #050505;
         color: #ffffff;
         font-family: "Inter", sans-serif;
+        cursor: default;
+        user-select: none;
       }
 
       #canvas-container {
@@ -35,95 +43,110 @@
         width: 100%;
         height: 100%;
         z-index: 2;
-        pointer-events: none; /* Let clicks pass through to 3D if needed */
+        pointer-events: none;
         display: flex;
         flex-direction: column;
         justify-content: center;
       }
 
       .slide-content {
-        width: 40%;
-        margin-left: 10%;
+        width: 42%;
+        margin-left: 8%;
         opacity: 0;
-        transform: translateY(20px);
-        transition:
-          opacity 0.8s ease,
-          transform 0.8s ease;
+        transform: translateY(30px);
         position: absolute;
+        pointer-events: none;
+        transition: none;
       }
 
       .slide-content.active {
-        opacity: 1;
-        transform: translateY(0);
+        pointer-events: auto;
       }
 
       h1 {
         font-family: "Playfair Display", serif;
-        font-size: 3.5rem;
-        margin: 0 0 10px 0;
-        line-height: 1.1;
+        font-size: 3.8rem;
+        margin: 0 0 8px 0;
+        line-height: 1.05;
         letter-spacing: -1.5px;
         font-weight: 700;
       }
 
       h2 {
-        font-family: "Inter", sans-serif;
-        font-size: 0.9rem;
+        font-family: "Playfair Display", serif;
+        font-size: 1.4rem;
         color: #888;
-        text-transform: uppercase;
-        letter-spacing: 4px;
-        margin: 0 0 30px 0;
+        font-style: italic;
+        margin: 0 0 24px 0;
         font-weight: 400;
       }
 
       p {
-        font-size: 1rem;
-        line-height: 1.8;
-        color: #a0a0a0;
-        margin: 0 0 20px 0;
+        font-size: 1.05rem;
+        line-height: 1.7;
+        color: #ccc;
+        margin: 0 0 12px 0;
         font-weight: 300;
-        max-width: 400px;
+        max-width: 480px;
       }
 
       .speaker-badge {
         display: inline-block;
-        font-size: 0.7rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 6px 18px;
+        border-radius: 20px;
+        font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 3px;
-        color: #666;
-        margin-bottom: 15px;
+        margin-bottom: 22px;
+        color: #999;
       }
 
-      #controls {
+      /* Slide progress dots — minimal, bottom-right */
+      #progress {
         position: absolute;
-        bottom: 50px;
-        right: 10%;
+        bottom: 40px;
+        right: 50px;
         z-index: 3;
-        pointer-events: auto;
         display: flex;
-        gap: 30px;
+        gap: 10px;
+        align-items: center;
       }
 
-      button {
-        background: transparent;
-        color: #555;
-        border: none;
-        padding: 10px;
-        font-family: "Inter", sans-serif;
-        font-size: 0.7rem;
-        cursor: pointer;
-        transition: all 0.4s ease;
-        text-transform: uppercase;
-        letter-spacing: 2px;
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
-      button:hover {
-        color: white;
+      .dot.active {
+        background: rgba(255, 255, 255, 0.9);
+        width: 24px;
+        border-radius: 3px;
       }
 
-      button:disabled {
+      /* Thin horizontal rule accent */
+      .accent-line {
+        width: 50px;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.25);
+        margin-bottom: 24px;
+      }
+
+      /* Transition cover for premium feel */
+      #transition-veil {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        background: #050505;
         opacity: 0;
-        cursor: not-allowed;
+        pointer-events: none;
       }
     </style>
   </head>
@@ -133,55 +156,70 @@
 
     <!-- UI Overlay -->
     <div id="ui-layer">
-      <!-- Slide 0 -->
+      <!-- Slide 0: Overview -->
       <div class="slide-content active" id="slide-0">
-        <h2>Introductie</h2>
-        <h1>Drie Perspectieven</h1>
+        <div class="accent-line"></div>
+        <h1>Onze Invalshoeken</h1>
+        <h2>De 3 Fictieboeken</h2>
+        <p>Historische feiten versus persoonlijke verhalen.</p>
         <p>
-          Een analyse van conflict en dictatuur door de lens van drie 
-          indringende verhalen.
+          Drie perspectieven, drie boeken, één diepgaande analyse over de impact
+          van conflict en dictatuur.
         </p>
       </div>
 
-      <!-- Slide 1 -->
+      <!-- Slide 1: Heldere Hemel -->
       <div class="slide-content" id="slide-1">
-        <div class="speaker-badge">Jess</div>
-        <h2>Tom Lanoye</h2>
+        <div class="speaker-badge">Spreker: Jess</div>
+        <div class="accent-line"></div>
         <h1>Heldere hemel</h1>
+        <h2>Tom Lanoye</h2>
+        <p><strong>Invalshoek 1: De onschuldige burger.</strong></p>
         <p>
-          Hoe de gewone mens wordt meegesleurd in een conflict dat zijn macht 
-          volledig te boven gaat.
+          De tragische focus op het onverwachte slachtoffer van het grote
+          conflict. Hoe de gewone mens wordt meegesleurd in zaken die zijn macht
+          te boven gaan.
         </p>
       </div>
 
-      <!-- Slide 2 -->
+      <!-- Slide 2: Erfenis van spionnen -->
       <div class="slide-content" id="slide-2">
-        <div class="speaker-badge">Nour</div>
-        <h2>John le Carré</h2>
+        <div class="speaker-badge">Spreker: Nour</div>
+        <div class="accent-line"></div>
         <h1>Erfenis van spionnen</h1>
+        <h2>John le Carré</h2>
+        <p><strong>Invalshoek 2: De wereld van spionage.</strong></p>
         <p>
-          De onverbiddelijke realiteit van spionage en de verwoestende gevolgen 
-          voor degenen die achterblijven.
+          De harde, onverbiddelijke realiteit van de Koude Oorlog en de
+          verwoestende gevolgen van geheime operaties voor achtergebleven
+          families.
         </p>
       </div>
 
-      <!-- Slide 3 -->
+      <!-- Slide 3: Muurziek -->
       <div class="slide-content" id="slide-3">
-        <div class="speaker-badge">Thibo</div>
-        <h2>Wouter Polspoel</h2>
+        <div class="speaker-badge">Spreker: Thibo</div>
+        <div class="accent-line"></div>
         <h1>Muurziek</h1>
+        <h2>Wouter Polspoel</h2>
+        <p><strong>Invalshoek 3: Het leven achter de Muur.</strong></p>
         <p>
-          Leven onder een totalitaire dictatuur: constante druk, paranoia en 
-          de hunkering naar vrijheid.
+          Een blik op Oost-Berlijn. De constante mentale druk, paranoia en het
+          verstikkende leven onder een totalitaire dictatuur.
         </p>
       </div>
     </div>
 
-    <!-- Navigation -->
-    <div id="controls">
-      <button id="btn-prev" disabled>Back</button>
-      <button id="btn-next">Next</button>
+    <!-- Progress dots -->
+    <div id="progress">
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
     </div>
+
+    <!-- Transition veil -->
+    <div id="transition-veil"></div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -189,20 +227,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
     <script>
-      // --- 1. SETUP THREE.JS SCENE ---
+      // ============================================================
+      //  1. THREE.JS SCENE SETUP
+      // ============================================================
       const container = document.getElementById("canvas-container");
       const scene = new THREE.Scene();
-
-      // Dramatische zwarte mist om elementen op de achtergrond te verbergen
-      scene.fog = new THREE.FogExp2(0x050505, 0.06);
+      scene.fog = new THREE.FogExp2(0x050505, 0.04);
 
       const camera = new THREE.PerspectiveCamera(
-        35, // Slightly tighter FOV for more cinematic compression
+        40,
         window.innerWidth / window.innerHeight,
         0.1,
         100,
       );
-      camera.position.set(0, 0, 14);
+      camera.position.set(0, 0.5, 14);
 
       const renderer = new THREE.WebGLRenderer({
         antialias: true,
@@ -213,248 +251,372 @@
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 0.8; // Donkerder voor meer drama
+      renderer.toneMappingExposure = 1.0;
       renderer.outputEncoding = THREE.sRGBEncoding;
       container.appendChild(renderer.domElement);
 
-      // --- 2. LIGHTING (Dramatisch / Minimalistisch) ---
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.02);
+      // ============================================================
+      //  2. LIGHTING — Cinematic, moody
+      // ============================================================
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.03);
       scene.add(ambientLight);
 
-      // Een enkele, krachtige spotlight die de focus volgt
-      const mainSpot = new THREE.SpotLight(0xffffff, 5);
-      mainSpot.position.set(0, 15, 10);
-      mainSpot.angle = Math.PI / 8;
-      mainSpot.penumbra = 0.5;
-      mainSpot.castShadow = true;
-      mainSpot.shadow.mapSize.set(2048, 2048);
-      scene.add(mainSpot);
-      scene.mainSpot = mainSpot; // Store for access
+      // Key light — warm, from upper right
+      const keyLight = new THREE.SpotLight(0xfff5e6, 3.5);
+      keyLight.position.set(6, 12, 10);
+      keyLight.angle = Math.PI / 6;
+      keyLight.penumbra = 0.7;
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 2048;
+      keyLight.shadow.mapSize.height = 2048;
+      keyLight.shadow.bias = -0.0005;
+      scene.add(keyLight);
 
-      // Subtiele rim light van achteren
-      const rimLight = new THREE.PointLight(0xffffff, 1.2, 30);
-      rimLight.position.set(0, 5, -10);
+      // Fill light — cool blue, subtle
+      const fillLight = new THREE.PointLight(0x3355aa, 0.8, 30);
+      fillLight.position.set(-8, 3, -3);
+      scene.add(fillLight);
+
+      // Rim/edge light — from behind
+      const rimLight = new THREE.PointLight(0xffffff, 0.5, 20);
+      rimLight.position.set(0, 6, -8);
       scene.add(rimLight);
-      scene.rimLight = rimLight;
 
-      // Blauwe accent light diep in de schaduwen
-      const blueFill = new THREE.PointLight(0x4466ff, 0.5, 40);
-      blueFill.position.set(-15, -5, -5);
-      scene.add(blueFill);
+      // Ground-bounce simulation
+      const bounceLight = new THREE.PointLight(0x222233, 0.3, 15);
+      bounceLight.position.set(0, -4, 5);
+      scene.add(bounceLight);
 
-      // --- 3. LOAD MODELS ---
+      // ============================================================
+      //  3. LOAD BOOK MODELS
+      // ============================================================
       const loader = new THREE.GLTFLoader();
-      const bookObjects = []; // Wrappers for animation
-      const bookMeshes = []; // The actual models (for floating animation)
+      const bookGroups = [];    // Outer wrapper for GSAP positioning
+      const bookPivots = [];    // Inner pivot for GSAP rotation animations
+      const wiggleGroups = [];  // Additive pivot for continuous micro-motion
+      const bookMaterials = []; // Track materials per book for dimming
 
-      // Bestandsnamen precies zoals gevraagd, in volgorde van de slides
       const bookData = [
         { file: "Heldere hemel.glb", color: 0x88aaff },
         { file: "Erfenis van spionnen.glb", color: 0xffaa88 },
         { file: "Muurziek.glb", color: 0xaa88ff },
       ];
 
-      // Functie om een model of een tijdelijke placeholder te maken
       bookData.forEach((data, index) => {
-        // Wrapper group voor GSAP positionering
         const group = new THREE.Group();
         scene.add(group);
-        bookObjects.push(group);
+        bookGroups.push(group);
 
-        // Binnenste group voor de zweef-animatie
-        const floatGroup = new THREE.Group();
-        group.add(floatGroup);
-        bookMeshes.push(floatGroup);
+        const pivot = new THREE.Group();
+        group.add(pivot);
+        bookPivots.push(pivot);
 
-        // Probeer het model te laden
+        const wiggle = new THREE.Group();
+        pivot.add(wiggle);
+        wiggleGroups.push(wiggle);
+
+        const mats = [];
+        bookMaterials.push(mats);
+
         loader.load(
           data.file,
           (gltf) => {
             const model = gltf.scene;
-
-            // Schaduwen aanzetten voor alle meshes in het model
             model.traverse((child) => {
               if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
+                // Enable transparency for dimming
+                child.material = child.material.clone();
+                child.material.transparent = true;
+                child.material.opacity = 1.0;
+                mats.push(child.material);
               }
             });
 
-            // Centreer en schaal het model (aanpassen indien nodig)
             model.scale.set(3.5, 3.5, 3.5);
-
-            // Roteer het model als het op zijn kant ligt (vaak nodig bij GLTF)
-            // Als de gebruiker de onderkant ziet, moeten we het 'omhoog' draaien
             model.rotation.x = Math.PI / 2;
 
-            // Center the geometry
+            // Center the model
             const box = new THREE.Box3().setFromObject(model);
             const center = box.getCenter(new THREE.Vector3());
             model.position.sub(center);
 
-            floatGroup.add(model);
+            wiggle.add(model);
           },
           undefined,
           (error) => {
-            console.warn(
-              `Kon ${data.file} niet laden. Laadt een placeholder.`,
-              error,
-            );
-            // Fallback: Als het model niet lokaal is, toon een mooi afgewerkt blok
-            const geometry = new THREE.BoxGeometry(2.5, 3.5, 0.6);
+            console.warn(`Could not load ${data.file}, using placeholder.`, error);
+            const geometry = new THREE.BoxGeometry(2.5, 3.5, 0.5);
             const material = new THREE.MeshStandardMaterial({
               color: data.color,
-              roughness: 0.2,
-              metalness: 0.1,
+              roughness: 0.3,
+              metalness: 0.05,
+              transparent: true,
+              opacity: 1.0,
             });
+            mats.push(material);
             const placeholder = new THREE.Mesh(geometry, material);
             placeholder.castShadow = true;
-            floatGroup.add(placeholder);
+            wiggle.add(placeholder);
           },
         );
       });
 
-      // Initiële posities (Slide 0: Staggered)
-      bookObjects.forEach((book, i) => {
-        book.position.set((i - 1) * 3, (i - 1) * -1.2, (i - 1) * -4);
-        book.rotation.y = -0.4 + i * 0.2;
-      });
+      // Initial positions — all three books spread out, centered
+      bookGroups[0].position.set(-4.5, 0, 0);
+      bookGroups[1].position.set(0, 0, 0);
+      bookGroups[2].position.set(4.5, 0, 0);
 
-      // --- 4. ANIMATIE LOGICA (GSAP) ---
+      // ============================================================
+      //  4. SLIDE LOGIC — GSAP Timelines
+      // ============================================================
       let currentSlide = 0;
       const totalSlides = 4;
+      let isAnimating = false;
 
-      function updateScene() {
-        // Update UI
-        document.querySelectorAll(".slide-content").forEach((el, index) => {
-          if (index === currentSlide) {
-            el.classList.add("active");
-          } else {
-            el.classList.remove("active");
-          }
+      const dots = document.querySelectorAll(".dot");
+      const slideEls = document.querySelectorAll(".slide-content");
+
+      function animateTextIn(slideEl) {
+        const children = slideEl.children;
+        gsap.fromTo(
+          slideEl,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.01 },
+        );
+        gsap.fromTo(
+          children,
+          { opacity: 0, y: 25 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.7,
+            stagger: 0.08,
+            ease: "power2.out",
+          },
+        );
+      }
+
+      function animateTextOut(slideEl) {
+        return gsap.to(slideEl, {
+          opacity: 0,
+          duration: 0.35,
+          ease: "power2.in",
+        });
+      }
+
+      function updateDots() {
+        dots.forEach((d, i) => {
+          d.classList.toggle("active", i === currentSlide);
+        });
+      }
+
+      // The core transition function
+      function transitionTo(targetSlide) {
+        if (isAnimating || targetSlide === currentSlide) return;
+        if (targetSlide < 0 || targetSlide >= totalSlides) return;
+        isAnimating = true;
+
+        const prevSlide = currentSlide;
+        currentSlide = targetSlide;
+
+        const prevSlideEl = document.getElementById(`slide-${prevSlide}`);
+        const nextSlideEl = document.getElementById(`slide-${currentSlide}`);
+
+        // Fade out old text, immediately start new text in parallel
+        prevSlideEl.classList.remove("active");
+        animateTextOut(prevSlideEl);
+
+        // Text appears right away alongside the 3D transition
+        nextSlideEl.classList.add("active");
+        animateTextIn(nextSlideEl);
+
+        // Update dots
+        updateDots();
+
+        // Build GSAP timeline for 3D — unlock navigation when it's done
+        const tl = gsap.timeline({
+          defaults: { duration: 1.4, ease: "power3.inOut" },
+          onComplete: () => { isAnimating = false; }
         });
 
-        // Update Buttons
-        document.getElementById("btn-prev").disabled = currentSlide === 0;
-        document.getElementById("btn-next").disabled =
-          currentSlide === totalSlides - 1;
-
-        const duration = 2.5;
-        const ease = "expo.inOut";
-
         if (currentSlide === 0) {
-          // Creative Intro: Staggered diagonal arrangement in 3D space
-          bookObjects.forEach((book, i) => {
-            gsap.to(book.position, {
-              x: (i - 1) * 3,
-              y: (i - 1) * -1.2,
-              z: (i - 1) * -4,
-              duration: duration,
-              ease: ease,
-            });
-            gsap.to(book.rotation, {
-              x: 0,
-              y: -0.4 + i * 0.2,
-              z: 0,
-              duration: duration,
-              ease: ease,
+          // ── OVERVIEW: All three books, elegant spread ──
+          tl.to(
+            camera.position,
+            { x: 0, y: 0.5, z: 14, duration: 1.6 },
+            0,
+          );
+
+          bookGroups.forEach((group, i) => {
+            const xPos = (i - 1) * 4.5;
+            tl.to(group.position, { x: xPos, y: 0, z: 0 }, 0);
+            tl.to(group.rotation, { x: 0, y: 0, z: 0 }, 0);
+
+            // Restore full opacity for all books
+            bookMaterials[i].forEach((mat) => {
+              tl.to(mat, { opacity: 1.0, duration: 0.8 }, 0.2);
             });
           });
 
-          // Camera Overview
-          gsap.to(camera.position, { x: 0, y: 0, z: 14, duration: duration, ease: ease });
-          if (scene.mainSpot) gsap.to(scene.mainSpot.position, { x: 0, y: 15, z: 10, duration: duration });
+          // Reset pivots (inner rotation)
+          bookPivots.forEach((pivot) => {
+            tl.to(pivot.rotation, { x: 0, y: 0, z: 0 }, 0);
+          });
+
+          // Lighting: centered, even
+          tl.to(keyLight.position, { x: 0, y: 12, z: 10 }, 0);
+          tl.to(keyLight, { intensity: 3.0 }, 0);
+          tl.to(fillLight, { intensity: 0.6 }, 0);
+          tl.to(ambientLight, { intensity: 0.04 }, 0);
+
         } else {
-          // Focus on specific book: Show volume (spine and front/back)
+          // ── FOCUS on one book ──
           const activeIndex = currentSlide - 1;
 
-          bookObjects.forEach((book, index) => {
-            if (index === activeIndex) {
-              // Bring active book to a dynamic angle showing volume
-              gsap.to(book.position, {
-                x: 2.8, // Centered better for 35 FOV
-                y: 0,
-                z: 4,
-                duration: duration,
-                ease: ease,
-              });
-              
-              // This rotation shows the front AND the spine/depth
-              gsap.to(book.rotation, {
-                x: 0.1,
-                y: -0.8, // Angle to see the side/spine
-                z: 0.05,
-                duration: duration,
-                ease: ease,
+          // Camera shifts subtly to frame the composition
+          tl.to(
+            camera.position,
+            { x: 1.5, y: 0.3, z: 13, duration: 1.6 },
+            0,
+          );
+
+          bookGroups.forEach((group, i) => {
+            if (i === activeIndex) {
+              // Active book: bring to right side, slightly forward
+              tl.to(group.position, { x: 4.2, y: 0, z: 3 }, 0);
+
+              // Full opacity for active book
+              bookMaterials[i].forEach((mat) => {
+                tl.to(mat, { opacity: 1.0, duration: 0.6 }, 0);
               });
 
-              // Spotlight follows the active book
-              if (scene.mainSpot) gsap.to(scene.mainSpot.position, {
-                x: 5,
-                y: 12,
-                z: 10,
-                duration: duration,
-                ease: ease,
-              });
-              
-              // Camera shift adjusted to keep model in frame
-              gsap.to(camera.position, { x: -1.5, y: 0, z: 12, duration: duration, ease: ease });
+              // Elegant slow rotation — show front first, then rotate to reveal back,
+              // then settle at a 3/4 angle showing the cover
+              const pivot = bookPivots[i];
+
+              // Phase 1: Present the front cover (slight angle)
+              tl.to(
+                pivot.rotation,
+                {
+                  x: 0,
+                  y: -0.3,
+                  z: 0,
+                  duration: 0.6,
+                  ease: "power2.out",
+                },
+                0,
+              );
+
+              // Phase 2: Rotate to show back cover
+              tl.to(
+                pivot.rotation,
+                {
+                  y: Math.PI + 0.3,
+                  duration: 1.2,
+                  ease: "power2.inOut",
+                },
+                0.7,
+              );
+
+              // Phase 3: Return to an elegant 3/4 angle showing front
+              tl.to(
+                pivot.rotation,
+                {
+                  y: Math.PI * 2 - 0.35,
+                  x: 0.05,
+                  duration: 1.0,
+                  ease: "power2.inOut",
+                },
+                2.0,
+              );
+
+              // Reset outer group rotation
+              tl.to(group.rotation, { x: 0, y: 0, z: 0 }, 0);
+
             } else {
-              // Others move away and fade out into the dark
-              const offset = (index - activeIndex) * 10;
-              gsap.to(book.position, {
-                x: offset,
-                y: -5,
-                z: -15,
-                duration: duration,
-                ease: ease,
-              });
-              gsap.to(book.rotation, {
-                y: offset > 0 ? Math.PI / 1.5 : -Math.PI / 1.5,
-                duration: duration,
-                ease: ease,
+              // Inactive books: spread to distinct far positions, never overlapping.
+              // Each inactive book gets its own unique slot far off-screen.
+              // We compute a unique offset so they don't stack on the same spot.
+              const inactiveSlots = [];
+              for (let j = 0; j < bookGroups.length; j++) {
+                if (j !== activeIndex) inactiveSlots.push(j);
+              }
+              const slotIndex = inactiveSlots.indexOf(i);
+              // First inactive goes far left, second goes far right
+              const xTarget = slotIndex === 0 ? -14 : 14;
+              const zTarget = -12;
+
+              tl.to(
+                group.position,
+                {
+                  x: xTarget,
+                  y: -2,
+                  z: zTarget,
+                  duration: 1.2,
+                },
+                0,
+              );
+              tl.to(
+                bookPivots[i].rotation,
+                { x: 0, y: 0, z: 0, duration: 0.8 },
+                0,
+              );
+
+              // Dim inactive books significantly
+              bookMaterials[i].forEach((mat) => {
+                tl.to(mat, { opacity: 0.12, duration: 1.0 }, 0);
               });
             }
           });
+
+          // Lighting: dramatic spot on the active book
+          tl.to(keyLight.position, { x: 6, y: 10, z: 8, duration: 1.4 }, 0);
+          tl.to(keyLight, { intensity: 4.5, duration: 1.0 }, 0.2);
+          tl.to(fillLight, { intensity: 0.3 }, 0);
+          tl.to(ambientLight, { intensity: 0.015 }, 0);
         }
       }
 
-      // --- 5. CONTROLS ---
-      document.getElementById("btn-next").addEventListener("click", () => {
-        if (currentSlide < totalSlides - 1) {
-          currentSlide++;
-          updateScene();
+      // ============================================================
+      //  5. KEYBOARD NAVIGATION — Arrow keys only
+      // ============================================================
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+          e.preventDefault();
+          transitionTo(currentSlide + 1);
+        } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+          e.preventDefault();
+          transitionTo(currentSlide - 1);
         }
       });
 
-      document.getElementById("btn-prev").addEventListener("click", () => {
-        if (currentSlide > 0) {
-          currentSlide--;
-          updateScene();
-        }
-      });
-
-      // --- 6. RENDER LOOP (Zweef Effect) ---
+      // ============================================================
+      //  6. RENDER LOOP — Subtle micro-motion for life
+      // ============================================================
       const clock = new THREE.Clock();
 
       function animate() {
         requestAnimationFrame(animate);
-
         const time = clock.getElapsedTime();
 
-        // Continue, subtiele zweef en rotatie-animatie voor elk boek
-        bookMeshes.forEach((meshGroup, index) => {
-          // Zweven (Y-as) - Iets trager en subtieler
-          meshGroup.position.y = Math.sin(time * 1.2 + index) * 0.1;
-          
-          // Als dit boek in focus is (currentSlide - 1 === index), voeg een extra rotatie toe
-          const activeIndex = currentSlide - 1;
-          if (activeIndex === index) {
-            // Langzaam doordraaien om volume te blijven tonen
-            meshGroup.rotation.y = Math.sin(time * 0.3) * 0.15;
+        // Continuous, seamless micro-motion on wiggleGroups.
+        // This is additive to whatever GSAP is doing on the parent 'pivot'.
+        wiggleGroups.forEach((wiggle, index) => {
+          if (currentSlide === 0) {
+            // Overview: Pleasant, fluid sway on all books
+            wiggle.rotation.y = Math.sin(time * 0.35 + index * 2.1) * 0.12;
+            wiggle.rotation.x = Math.sin(time * 0.22 + index * 1.3) * 0.06;
           } else {
-            // Normaal subtiel draaien
-            meshGroup.rotation.y = Math.sin(time * 0.5 + index) * 0.05;
+            // Focus mode: More pronounced motion on focused book (doubled amplitude)
+            const isActive = (index === currentSlide - 1);
+            const ampY = isActive ? 0.28 : 0.10;
+            const ampX = isActive ? 0.14 : 0.05;
+            const speed = isActive ? 0.4 : 0.2;
+            
+            wiggle.rotation.y = Math.sin(time * speed + index) * ampY;
+            wiggle.rotation.x = Math.sin(time * speed * 0.8 + index) * ampX;
           }
         });
 
@@ -463,15 +625,48 @@
 
       animate();
 
-      // --- 7. RESIZE HANDLER ---
+      // ============================================================
+      //  7. RESIZE HANDLER
+      // ============================================================
       window.addEventListener("resize", () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
 
-      // Start met de initiële state
-      updateScene();
+      // ============================================================
+      //  8. INITIAL ENTRANCE ANIMATION — fast and cinematic
+      // ============================================================
+      // Books start off-screen: left, deep-back, right
+      bookGroups[0].position.set(-14, 0, -4);
+      bookGroups[1].position.set(0, 0, -18);
+      bookGroups[2].position.set(14, 0, -4);
+
+      // Start lights dim
+      ambientLight.intensity = 0;
+      keyLight.intensity = 0;
+
+      const introTL = gsap.timeline({ delay: 0.1 });
+
+      // Lights come up fast
+      introTL.to(ambientLight, { intensity: 0.04, duration: 0.6, ease: "power2.out" }, 0);
+      introTL.to(keyLight, { intensity: 3.0, duration: 0.8, ease: "power2.out" }, 0);
+      introTL.to(fillLight, { intensity: 0.6, duration: 0.8 }, 0);
+
+      // All three books converge simultaneously to their overview positions
+      const finalPositions = [[-4.5, 0, 0], [0, 0, 0], [4.5, 0, 0]];
+      bookGroups.forEach((group, i) => {
+        const [fx, fy, fz] = finalPositions[i];
+        introTL.to(
+          group.position,
+          { x: fx, y: fy, z: fz, duration: 0.85, ease: "power3.out" },
+          i === 1 ? 0.05 : 0,  // center book hits a tiny beat after the flanks
+        );
+      });
+
+      // Text appears as books land
+      const firstSlide = document.getElementById("slide-0");
+      introTL.add(() => animateTextIn(firstSlide), 0.6);
     </script>
   </body>
 </html>

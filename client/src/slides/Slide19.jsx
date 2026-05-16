@@ -1,29 +1,39 @@
 import Slide from '../components/Slide';
+import usFlag from '../assets/us.webp';
+import ussrFlag from '../assets/ussr.png';
 
 export default function Slide19() {
   return (
     <Slide className=" text-white">
-      <div className="flex h-full items-center">
-        <div className="w-1/2 flex flex-col justify-center pr-12">
-          <div className="mb-4 text-slate-500 font-bold uppercase tracking-widest text-xl">Muurziek</div>
-          <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter">De Stasi</h2>
-          <div className="space-y-6 text-2xl text-slate-300">
-            <p><span className="text-red-500 font-bold">Ministerium für Staatssicherheit:</span> De ogen en oren van de staat.</p>
-            <p>Extreme controle door afluisteren.</p>
-            <p className="border-l-4 border-slate-500 pl-6 py-2 bg-slate-900/10 italic">
-              Niemand was te vertrouwen, zelfs je geliefde niet.
-            </p>
-            <p className="text-lg text-slate-500 italic mt-8">
-              "Bastian versiert Emma om haar familie te kunnen verraden."
-            </p>
-          </div>
+      <div className="flex flex-col h-full justify-center items-center text-center">
+        <h2 className="text-7xl font-black mb-4 uppercase tracking-tighter text-red-600">MAD</h2>
+        <div className="text-2xl font-bold uppercase tracking-[0.3em] mb-12 text-white">
+          <span className="text-red-600">M</span>utually <span className="text-red-600">A</span>ssured <span className="text-red-600">D</span>estruction
         </div>
-        <div className="w-1/2 flex items-center justify-center p-12">
-           <div className="w-full aspect-square bg-slate-900 border-2 border-red-900/50 rounded-full flex items-center justify-center relative overflow-hidden">
-              <div className="text-[10rem] z-10">👂</div>
-              <div className="absolute inset-0 bg-[radial-gradient(circle,transparent_40%,rgba(220,38,38,0.1)_100%)] animate-pulse" />
+        
+        <div className="flex items-center justify-center space-x-24 w-full max-w-4xl">
+           <div className="flex flex-col items-center">
+              <img src={usFlag} alt="USA Flag" className="w-40 h-auto object-contain mb-4 shadow-2xl" />
+              <div className="text-xl font-black uppercase">USA</div>
+           </div>
+           
+           <div className="flex flex-col items-center w-full">
+              <div className="h-1 bg-slate-800 w-full relative">
+                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-slate-600 rounded-full" />
+              </div>
+              <div className="mt-8 text-xl text-slate-500 italic">"Gegarandeerde vernietiging aan beide kanten."</div>
+           </div>
+
+           <div className="flex flex-col items-center">
+              <img src={ussrFlag} alt="USSR Flag" className="w-32 h-auto object-contain mb-4 shadow-2xl" />
+              <div className="text-xl font-black uppercase">USSR</div>
            </div>
         </div>
+        
+        <p className="mt-20 text-3xl text-slate-300 w-full">
+          Ironisch genoeg bewaarde deze terreur de vrede: <br/>
+          <span className="text-white font-bold italic">Niemand durfde te schieten.</span>
+        </p>
       </div>
     </Slide>
   );

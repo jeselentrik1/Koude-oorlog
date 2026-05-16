@@ -1,29 +1,29 @@
 import Slide from '../components/Slide';
+import nuclearImage from '../assets/nuclear_weapon.jpg';
 
 export default function Slide18() {
   return (
     <Slide className=" text-white">
-      <div className="flex h-full items-center">
-        <div className="w-1/2 flex items-center justify-center p-12">
-          <div className="relative">
-             <div className="text-[12rem] opacity-20">👋</div>
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl font-black text-white/50 border-y-4 border-white/50 py-4 px-8 rotate-12">
-                VERBODEN
-             </div>
+      <div className="flex h-full">
+        <div className="w-1/2 flex flex-col justify-center pr-12 border-r border-slate-800">
+          <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter">Waarom "Koud"?</h2>
+          <div className="space-y-6 text-2xl text-slate-300">
+            <p>Geen directe strijd tussen VS en Sovjet-Unie.</p>
+            <p className="text-white font-bold">De oorzaak: Kernwapens.</p>
+            <p>Een confrontatie zou het einde van de wereld betekenen.</p>
+            <div className="h-px bg-slate-800 my-4" />
+            <p className="text-red-500 uppercase tracking-widest font-black">Wapenwedloop</p>
+            <p>Miljarden aan uitgaven voor steeds grotere arsenalen.</p>
           </div>
         </div>
-        <div className="w-1/2 flex flex-col justify-center pl-12 border-l border-slate-800">
-          <div className="mb-4 text-slate-500 font-bold uppercase tracking-widest text-xl">Muurziek</div>
-          <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter">Leven in Angst</h2>
-          <div className="space-y-6 text-2xl text-slate-300">
-            <p>Families bruut van elkaar gescheiden.</p>
-            <p className="text-white font-bold italic">"De Muurziek"</p>
-            <p>Het verstikkende gevoel van opgesloten te zijn in eigen stad.</p>
-            <div className="h-px bg-slate-800 my-4" />
-            <p className="text-lg text-slate-500 italic">
-              "Sepp mag niet naar het trouwfeest van zijn eigen familie."
-            </p>
-          </div>
+        <div className="w-1/2 flex items-center justify-center relative pl-12">
+           <div className="relative w-full">
+              <img 
+                src={nuclearImage} 
+                alt="Kernwapen" 
+                className="w-full h-auto rounded-lg shadow-2xl opacity-70"
+              />
+           </div>
         </div>
       </div>
     </Slide>

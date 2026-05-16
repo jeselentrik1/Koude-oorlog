@@ -2,8 +2,12 @@ import Presentation from './components/Presentation';
 import KahootApp from './kahoot/KahootApp';
 import KahootHostTest from './kahoot/KahootHostTest';
 import { useState, useEffect } from 'react';
+import coldWarImg from './assets/cold_war.jpeg';
+import tensionImg from './assets/tension.jpeg';
+import berlinWallImg from './assets/berlin_wall.jpeg';
+import nuclearImg from './assets/nuclear.jpeg';
 
-// Import all 34 slides
+// Import all 31 slides
 import Slide1 from './slides/Slide1';
 import Slide2 from './slides/Slide2';
 import Slide3 from './slides/Slide3';
@@ -35,17 +39,25 @@ import Slide28 from './slides/Slide28';
 import Slide29 from './slides/Slide29';
 import Slide30 from './slides/Slide30';
 import Slide31 from './slides/Slide31';
-import Slide32 from './slides/Slide32';
-import Slide33 from './slides/Slide33';
-import Slide34 from './slides/Slide34';
 
 // Array of slide components
 const slides = [
   Slide1, Slide2, Slide3, Slide4, Slide5, Slide6, Slide7, Slide8, Slide9, Slide10,
   Slide11, Slide12, Slide13, Slide14, Slide15, Slide16, Slide17, Slide18, Slide19, Slide20,
   Slide21, Slide22, Slide23, Slide24, Slide25, Slide26, Slide27, Slide28, Slide29, Slide30,
-  Slide31, Slide32, Slide33, Slide34
+  Slide31
 ];
+
+// Slide metadata for sequence-based backgrounds
+const slideMetadata = {
+  0: { isSection: true, background: { image: coldWarImg, brightness: 0.35 } },
+  5: { isSection: true, background: { image: tensionImg, brightness: 0.3 } },
+  11: { isSection: true, background: { image: berlinWallImg, brightness: 0.52 } },
+  16: { isSection: true, background: { image: nuclearImg, brightness: 0.3 } },
+  22: { isSection: true },
+  4: { background: { color: '#050505', plain: true } },
+  23: { background: { color: '#020202', plain: true } },
+};
 
 // Interactive sections to insert between slides
 import KahootHost from './kahoot/KahootHost';
@@ -57,23 +69,23 @@ const interstitials = [
     component: ({ onComplete }) => <KahootHost isLobby={true} onComplete={onComplete} />
   },
   { 
-    atIndex: 9, 
+    atIndex: 6, 
     component: ({ onComplete }) => <KahootHost questionId="q_navo" onComplete={onComplete} />
   },
   { 
-    atIndex: 15, 
+    atIndex: 12, 
     component: ({ onComplete }) => <KahootHost questionId="q_berlin_wall" onComplete={onComplete} />
   },
   { 
-    atIndex: 22, 
+    atIndex: 19, 
     component: ({ onComplete }) => <KahootHost questionId="q_mi6" onComplete={onComplete} />
   },
   { 
-    atIndex: 25, 
+    atIndex: 22, 
     component: ({ onComplete }) => <KahootHost questionId="q_ussr_fall" onComplete={onComplete} />
   },
   { 
-    atIndex: 33, 
+    atIndex: 30, 
     component: ({ onComplete }) => <KahootHost questionId="q_bonus" onComplete={onComplete} />
   }
 ];
@@ -93,6 +105,7 @@ function App() {
   if (currentPath === '/present') {
     return <Presentation 
       slides={slides} 
+      slideMetadata={slideMetadata}
       interstitials={interstitials}
       navigate={(path) => {
         window.history.pushState({}, '', path);
