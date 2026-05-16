@@ -19,7 +19,7 @@ export default function KahootHostTest() {
   const [socket, setSocket] = useState(null);
   const [sntp, setSntp] = useState(null);
   const [gameState, setGameState] = useState(STATES.START);
-  const [password, setPassword] = useState('change-this-password');
+  const [password, setPassword] = useState('');
   const [sid, setSid] = useState('');
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);

@@ -20,7 +20,7 @@ export default function KahootHost({ questionId, isLobby, onComplete }) {
   const [socket, setSocket] = useState(null);
   const [sntp, setSntp] = useState(null);
   const [gameState, setGameState] = useState(STATES.START);
-  const [password, setPassword] = useState('change-this-password');
+  const [password, setPassword] = useState('');
   const [sid, setSid] = useState('');
   const [questions, setQuestions] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(null);
