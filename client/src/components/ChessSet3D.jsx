@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { useAssetCache } from './AssetContext';
 
 export default function ChessSet3D({
   fadeInDelaySec = 0.5,
@@ -13,6 +14,7 @@ export default function ChessSet3D({
   const modelRef = useRef(null);
   const frameRef = useRef(null);
   const startTimestampRef = useRef(null);
+  const { getCachedModel } = useAssetCache();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -91,8 +93,10 @@ export default function ChessSet3D({
 
     // --- LOAD MODEL ---
     const loader = new GLTFLoader();
-    loader.load('/wooden_chess_set.glb', (gltf) => {
-      const model = gltf.scene;
+    const cached = getCachedModel('/wooden_chess_set.glb');
+
+    const handleModel = (gltf) => {
+      const model = gltf.scene.clone();
       modelRef.current = model;
 
       const box0 = new THREE.Box3().setFromObject(model);
@@ -122,7 +126,13 @@ export default function ChessSet3D({
       });
 
       scene.add(model);
-    });
+    };
+
+    if (cached) {
+      handleModel(cached);
+    } else {
+      loader.load('/wooden_chess_set.glb', handleModel);
+    }
 
     const INTRO_DURATION = 8000;
     const LIGHT_DELAY_MS = fadeInDelaySec * 1000;

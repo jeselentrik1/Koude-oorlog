@@ -1,14 +1,16 @@
 import Slide from '../components/Slide';
 import familiesImage from '../assets/families.jpg';
+import { useAssetCache } from '../components/AssetContext';
 
 export default function Slide15() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className=" text-white">
       <div className="flex h-full items-center">
         <div className="w-1/2 flex items-center justify-center p-12">
           <div className="relative w-full">
              <img 
-               src={familiesImage} 
+               src={getAssetUrl(familiesImage)} 
                alt="Families gescheiden door de muur" 
                className="w-full h-auto rounded-lg shadow-2xl opacity-70"
              />

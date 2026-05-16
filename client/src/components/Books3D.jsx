@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAssetCache } from './AssetContext';
 
 const CONFIG = {
   ambientIntensity: 0.08 * Math.PI,
@@ -24,6 +25,7 @@ export default function Books3D({ phase = 0 }) {
   const containerRef = useRef(null);
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
+  const { getCachedModel } = useAssetCache();
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -112,49 +114,57 @@ export default function Books3D({ phase = 0 }) {
       const mats = [];
       bookMaterials.push(mats);
 
-      loader.load(
-        `/${data.file}`,
-        (gltf) => {
-          const model = gltf.scene;
-          model.traverse((child) => {
-            if (child.isMesh) {
-              child.castShadow = true;
-              child.receiveShadow = true;
-              child.material = child.material.clone();
-              child.material.transparent = true;
-              child.material.opacity = 1.0;
-              mats.push(child.material);
-            }
-          });
+      const cached = getCachedModel(`/${data.file}`);
 
-          model.scale.set(CONFIG.bookScale, CONFIG.bookScale, CONFIG.bookScale);
-          model.rotation.x = Math.PI / 2;
+      const handleModel = (gltf) => {
+        const model = gltf.scene.clone(); // Clone for safety if reused
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            child.material = child.material.clone();
+            child.material.transparent = true;
+            child.material.opacity = 1.0;
+            mats.push(child.material);
+          }
+        });
 
-          const box = new THREE.Box3().setFromObject(model);
-          const center = box.getCenter(new THREE.Vector3());
-          model.position.sub(center);
+        model.scale.set(CONFIG.bookScale, CONFIG.bookScale, CONFIG.bookScale);
+        model.rotation.x = Math.PI / 2;
 
-          wiggle.add(model);
-          onModelLoad();
-        },
-        undefined,
-        (error) => {
-          console.warn(`Could not load ${data.file}, using placeholder.`, error);
-          const geometry = new THREE.BoxGeometry(2.5, 3.5, 0.5);
-          const material = new THREE.MeshStandardMaterial({
-            color: data.color,
-            roughness: 0.3,
-            metalness: 0.05,
-            transparent: true,
-            opacity: 1.0,
-          });
-          mats.push(material);
-          const placeholder = new THREE.Mesh(geometry, material);
-          placeholder.castShadow = true;
-          wiggle.add(placeholder);
-          onModelLoad();
-        }
-      );
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center);
+
+        wiggle.add(model);
+        onModelLoad();
+      };
+
+      if (cached) {
+        handleModel(cached);
+      } else {
+        loader.load(
+          `/${data.file}`,
+          handleModel,
+          undefined,
+          (error) => {
+            console.warn(`Could not load ${data.file}, using placeholder.`, error);
+            const geometry = new THREE.BoxGeometry(2.5, 3.5, 0.5);
+            const material = new THREE.MeshStandardMaterial({
+              color: data.color,
+              roughness: 0.3,
+              metalness: 0.05,
+              transparent: true,
+              opacity: 1.0,
+            });
+            mats.push(material);
+            const placeholder = new THREE.Mesh(geometry, material);
+            placeholder.castShadow = true;
+            wiggle.add(placeholder);
+            onModelLoad();
+          }
+        );
+      }
     });
 
     // Initial positions

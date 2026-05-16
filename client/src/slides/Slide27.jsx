@@ -1,7 +1,9 @@
 import Slide from '../components/Slide';
 import vrtNwsLogo from '../assets/vrt_nws.png';
+import { useAssetCache } from '../components/AssetContext';
 
 export default function Slide27() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className=" text-white">
       <div className="flex h-full items-center">
@@ -42,7 +44,7 @@ export default function Slide27() {
               {/* Content Area */}
               <div className="flex-1 bg-white p-8 overflow-hidden">
                 <div className="mb-6">
-                  <img src={vrtNwsLogo} alt="VRT NWS" className="h-6 object-contain" />
+                  <img src={getAssetUrl(vrtNwsLogo)} alt="VRT NWS" className="h-6 object-contain" />
                 </div>
 
                 <div className="space-y-6">

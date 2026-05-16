@@ -2,6 +2,7 @@ import Presentation from './components/Presentation';
 import KahootApp from './kahoot/KahootApp';
 import KahootHostTest from './kahoot/KahootHostTest';
 import { useState, useEffect } from 'react';
+import { AssetProvider } from './components/AssetContext';
 import coldWarImg from './assets/cold_war.jpeg';
 import tensionImg from './assets/tension.jpeg';
 import berlinWallImg from './assets/berlin_wall.jpeg';
@@ -102,15 +103,19 @@ function App() {
   }, []);
 
   if (currentPath === '/present') {
-    return <Presentation 
-      slides={slides} 
-      slideMetadata={slideMetadata}
-      interstitials={interstitials}
-      navigate={(path) => {
-        window.history.pushState({}, '', path);
-        setCurrentPath(path);
-      }} 
-    />;
+    return (
+      <AssetProvider>
+        <Presentation 
+          slides={slides} 
+          slideMetadata={slideMetadata}
+          interstitials={interstitials}
+          navigate={(path) => {
+            window.history.pushState({}, '', path);
+            setCurrentPath(path);
+          }} 
+        />
+      </AssetProvider>
+    );
   }
 
   if (currentPath === '/host-test') {

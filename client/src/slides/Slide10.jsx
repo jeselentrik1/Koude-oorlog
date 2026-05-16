@@ -1,7 +1,9 @@
 import Slide from '../components/Slide';
 import migImage from '../assets/mig_23.jpg';
+import { useAssetCache } from '../components/AssetContext';
 
 export default function Slide10() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className=" text-white">
       <div className="flex h-full items-center">
@@ -19,7 +21,7 @@ export default function Slide10() {
         <div className="w-1/2 flex items-center justify-center p-12">
           <div className="relative w-full bg-slate-900 border border-slate-800 transform -rotate-2 overflow-hidden">
             <img 
-              src={migImage} 
+              src={getAssetUrl(migImage)} 
               alt="MiG-23" 
               className="w-full h-auto"
             />

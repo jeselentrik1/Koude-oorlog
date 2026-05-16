@@ -1,7 +1,9 @@
 import Slide from '../components/Slide';
 import nuclearTest from '../assets/nuclear_test.png';
+import { useAssetCache } from '../components/AssetContext';
 
 export default function Slide2() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className=" text-white">
       <div className="flex h-full">
@@ -23,7 +25,7 @@ export default function Slide2() {
           </div>
         </div>
         <div className="w-1/2 flex flex-col justify-center pl-12 items-center">
-          <img src={nuclearTest} alt="Nuclear Test" className="w-full max-w-2xl mb-12 rounded-lg border border-white/10 shadow-2xl" />
+          <img src={getAssetUrl(nuclearTest)} alt="Nuclear Test" className="w-full max-w-2xl mb-12 rounded-lg border border-white/10 shadow-2xl" />
           <div className="relative w-full py-8">
             <div className="h-px bg-white/20 w-full absolute top-[calc(2rem+8px)]" />
             <div className="flex justify-between relative">

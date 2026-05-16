@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAssetCache } from './AssetContext';
 
 const Background = ({ background, lastSectionBackground }) => {
+  const { getAssetUrl } = useAssetCache();
   const activeBackground = background || lastSectionBackground;
   const isFallback = !background && lastSectionBackground;
 
@@ -18,7 +20,7 @@ const Background = ({ background, lastSectionBackground }) => {
           {activeBackground?.image ? (
             <div className="absolute inset-0">
               <img
-                src={activeBackground.image}
+                src={getAssetUrl(activeBackground.image)}
                 alt=""
                 className="w-full h-full object-cover scale-105"
                 style={{ 

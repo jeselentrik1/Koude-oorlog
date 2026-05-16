@@ -1,7 +1,9 @@
 import Slide from '../components/Slide';
 import stasiImage from '../assets/stasi.webp';
+import { useAssetCache } from '../components/AssetContext';
 
 export default function Slide16() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className=" text-white">
       <div className="flex h-full items-center">
@@ -22,7 +24,7 @@ export default function Slide16() {
         <div className="w-1/2 flex items-center justify-center p-12">
           <div className="relative w-full">
              <img 
-               src={stasiImage} 
+               src={getAssetUrl(stasiImage)} 
                alt="Stasi afluisterapparatuur" 
                className="w-full h-auto rounded-lg shadow-2xl opacity-70"
              />

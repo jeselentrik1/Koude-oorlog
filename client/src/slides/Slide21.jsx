@@ -1,6 +1,7 @@
 import Slide from '../components/Slide';
 import ChessSet3D from '../components/ChessSet3D';
 import { motion } from 'framer-motion';
+import { useAssetCache } from '../components/AssetContext';
 
 /** Radial scrim: avoids long linear CSS gradients (they band into gray “bars” on 8‑bit displays). */
 const TEXT_SCRIM_STYLE = {
@@ -22,6 +23,7 @@ const BG_FADE_DURATION = 2.6;
 const BG_FADE_DELAY = 0.5;
 
 export default function Slide21() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className="text-white !p-0" background={{ color: '#020202', plain: true }}>
       <div className="relative flex h-full w-full min-h-0">
@@ -50,7 +52,7 @@ export default function Slide21() {
             className="pointer-events-none absolute inset-0 opacity-[0.04]"
             style={{
               backgroundImage:
-                "url('https://www.transparenttextures.com/patterns/stardust.png')",
+                `url('${getAssetUrl('https://www.transparenttextures.com/patterns/stardust.png')}')`,
             }}
             aria-hidden
           />

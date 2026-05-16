@@ -1,8 +1,10 @@
 import Slide from '../components/Slide';
 import usFlag from '../assets/us.webp';
 import ussrFlag from '../assets/ussr.png';
+import { useAssetCache } from '../components/AssetContext';
 
 export default function Slide19() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className=" text-white">
       <div className="flex flex-col h-full justify-center items-center text-center">
@@ -13,7 +15,7 @@ export default function Slide19() {
         
         <div className="flex items-center justify-center space-x-24 w-full max-w-4xl">
            <div className="flex flex-col items-center">
-              <img src={usFlag} alt="USA Flag" className="w-40 h-auto object-contain mb-4 shadow-2xl" />
+              <img src={getAssetUrl(usFlag)} alt="USA Flag" className="w-40 h-auto object-contain mb-4 shadow-2xl" />
               <div className="text-xl font-black uppercase">USA</div>
            </div>
            
@@ -25,7 +27,7 @@ export default function Slide19() {
            </div>
 
            <div className="flex flex-col items-center">
-              <img src={ussrFlag} alt="USSR Flag" className="w-32 h-auto object-contain mb-4 shadow-2xl" />
+              <img src={getAssetUrl(ussrFlag)} alt="USSR Flag" className="w-32 h-auto object-contain mb-4 shadow-2xl" />
               <div className="text-xl font-black uppercase">USSR</div>
            </div>
         </div>

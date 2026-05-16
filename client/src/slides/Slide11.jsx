@@ -1,14 +1,16 @@
 import Slide from '../components/Slide';
 import wimImage from '../assets/wim_delaere.jpg';
+import { useAssetCache } from '../components/AssetContext';
 
 export default function Slide11() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className=" text-white">
       <div className="flex h-full items-center">
         <div className="w-1/2 flex items-center justify-center p-12">
           <div className="relative w-full aspect-square bg-slate-900 border border-slate-800 overflow-hidden">
             <img 
-              src={wimImage} 
+              src={getAssetUrl(wimImage)} 
               alt="Wim Delaere" 
               className="w-full h-full object-cover"
             />

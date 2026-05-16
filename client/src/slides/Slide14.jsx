@@ -1,7 +1,9 @@
 import Slide from '../components/Slide';
 import wallImage from '../assets/wall.png';
+import { useAssetCache } from '../components/AssetContext';
 
 export default function Slide14() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className=" text-white">
       <div className="flex flex-col h-full justify-center">
@@ -25,7 +27,7 @@ export default function Slide14() {
               </ul>
            </div>
            <div className="bg-slate-900 rounded-3xl border border-slate-800 flex flex-col justify-center items-center overflow-hidden">
-              <img src={wallImage} alt="Berlijnse Muur" className="w-full h-full object-cover" />
+              <img src={getAssetUrl(wallImage)} alt="Berlijnse Muur" className="w-full h-full object-cover" />
            </div>
         </div>
       </div>

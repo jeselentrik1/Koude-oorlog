@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { useAssetCache } from './AssetContext';
 
 // Import local assets to get their processed URLs
 import berlinWallImg from '../assets/berlin_wall.jpeg';
@@ -46,40 +47,61 @@ const ASSETS = {
 
 export default function AssetPreloader({ onComplete }) {
   const [progress, setProgress] = useState(0);
-  const [totalLoaded, setTotalLoaded] = useState(0);
+  const { setAssetMap, setModelCache } = useAssetCache();
   const totalAssets = ASSETS.images.length + ASSETS.models.length;
+  const loadedCountRef = useRef(0);
 
   useEffect(() => {
-    let loadedCount = 0;
     const loader = new GLTFLoader();
+    const newAssetMap = {};
+    const newModelCache = {};
 
     const updateProgress = () => {
-      loadedCount++;
-      setTotalLoaded(loadedCount);
-      setProgress(Math.round((loadedCount / totalAssets) * 100));
-      if (loadedCount === totalAssets) {
+      loadedCountRef.current++;
+      const current = loadedCountRef.current;
+      setProgress(Math.round((current / totalAssets) * 100));
+      
+      if (current === totalAssets) {
+        setAssetMap(newAssetMap);
+        setModelCache(newModelCache);
         // Add a small delay for smoothness
-        setTimeout(() => onComplete(), 500);
+        setTimeout(() => onComplete(), 600);
       }
     };
 
-    // Preload Images
-    ASSETS.images.forEach(src => {
-      const img = new Image();
-      img.src = src;
-      img.onload = updateProgress;
-      img.onerror = updateProgress; // Continue even if one fails
-    });
-
-    // Preload Models
-    ASSETS.models.forEach(url => {
-      loader.load(url, updateProgress, undefined, (err) => {
-        console.error(`Failed to load model: ${url}`, err);
+    // Preload Images as Blobs
+    ASSETS.images.forEach(async (url) => {
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        newAssetMap[url] = objectUrl;
         updateProgress();
-      });
+      } catch (err) {
+        console.error(`Failed to fetch image: ${url}`, err);
+        updateProgress();
+      }
     });
 
-  }, [onComplete, totalAssets]);
+    // Preload Models and cache the GLTF object
+    ASSETS.models.forEach((url) => {
+      loader.load(
+        url, 
+        (gltf) => {
+          newModelCache[url] = gltf;
+          updateProgress();
+        }, 
+        undefined, 
+        (err) => {
+          console.error(`Failed to load model: ${url}`, err);
+          updateProgress();
+        }
+      );
+    });
+
+    // Cleanup object URLs on unmount is tricky because they are needed for the presentation.
+    // We'll let the browser handle them since this is a SPA and they'll live for the session.
+  }, [onComplete, totalAssets, setAssetMap, setModelCache]);
 
   return (
     <div className="flex flex-col items-center justify-center space-y-6">
