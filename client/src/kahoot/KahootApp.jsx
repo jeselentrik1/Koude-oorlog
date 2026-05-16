@@ -5,7 +5,7 @@ import { motion, AnimatePresence, animate } from 'framer-motion';
 import { User, Clock, CheckCircle2, XCircle, Trophy, Triangle, Diamond, Circle, Square } from 'lucide-react';
 import coldWarBg from '../assets/cold_war.jpeg';
 
-const SOCKET_URL = import.meta.env.PROD ? '/' : 'http://localhost:3001';
+const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 const STATES = {
   JOIN: 'JOIN',

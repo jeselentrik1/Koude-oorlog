@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boeken Presentatie - 3D Visualisatie</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap");
+
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #050505;
+        color: #ffffff;
+        font-family: "Inter", sans-serif;
+      }
+
+      #canvas-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+
+      #ui-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        pointer-events: none; /* Let clicks pass through to 3D if needed */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .slide-content {
+        width: 40%;
+        margin-left: 10%;
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.8s ease,
+          transform 0.8s ease;
+        position: absolute;
+      }
+
+      .slide-content.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      h1 {
+        font-family: "Playfair Display", serif;
+        font-size: 4rem;
+        margin: 0 0 10px 0;
+        line-height: 1.1;
+        letter-spacing: -1px;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      }
+
+      h2 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.5rem;
+        color: #a3a3a3;
+        font-style: italic;
+        margin: 0 0 20px 0;
+        font-weight: 400;
+      }
+
+      p {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: #e0e0e0;
+        margin: 0 0 15px 0;
+        font-weight: 300;
+      }
+
+      .speaker-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(5px);
+      }
+
+      #controls {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+        pointer-events: auto;
+        display: flex;
+        gap: 20px;
+      }
+
+      button {
+        background: transparent;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        padding: 12px 30px;
+        font-family: "Inter", sans-serif;
+        font-size: 1rem;
+        cursor: pointer;
+        border-radius: 30px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      button:hover {
+        background: white;
+        color: black;
+      }
+
+      button:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        background: transparent;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div id="ui-layer">
+      <!-- Slide 5 -->
+      <div class="slide-content active" id="slide-0">
+        <h1>Onze Invalshoeken</h1>
+        <h2>De 3 Fictieboeken</h2>
+        <p>Historische feiten versus persoonlijke verhalen.</p>
+        <p>
+          Drie perspectieven, drie boeken, één diepgaande analyse over de impact
+          van conflict en dictatuur.
+        </p>
+      </div>
+
+      <!-- Slide 6 -->
+      <div class="slide-content" id="slide-1">
+        <div class="speaker-badge">Spreker: Jess</div>
+        <h1>Heldere hemel</h1>
+        <h2>Tom Lanoye</h2>
+        <p><strong>Invalshoek 1: De onschuldige burger.</strong></p>
+        <p>
+          De tragische focus op het onverwachte slachtoffer van het grote
+          conflict. Hoe de gewone mens wordt meegesleurd in zaken die zijn macht
+          te boven gaan.
+        </p>
+      </div>
+
+      <!-- Slide 7 -->
+      <div class="slide-content" id="slide-2">
+        <div class="speaker-badge">Spreker: Nour</div>
+        <h1>Erfenis van spionnen</h1>
+        <h2>John le Carré</h2>
+        <p><strong>Invalshoek 2: De wereld van spionage.</strong></p>
+        <p>
+          De harde, onverbiddelijke realiteit van de Koude Oorlog en de
+          verwoestende gevolgen van geheime operaties voor achtergebleven
+          families.
+        </p>
+      </div>
+
+      <!-- Slide 8 -->
+      <div class="slide-content" id="slide-3">
+        <div class="speaker-badge">Spreker: Thibo</div>
+        <h1>Muurziek</h1>
+        <h2>Wouter Polspoel</h2>
+        <p><strong>Invalshoek 3: Het leven achter de Muur.</strong></p>
+        <p>
+          Een blik op Oost-Berlijn. De constante mentale druk, paranoia en het
+          verstikkende leven onder een totalitaire dictatuur.
+        </p>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <div id="controls">
+      <button id="btn-prev" disabled>Vorige</button>
+      <button id="btn-next">Volgende</button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+      // --- 1. SETUP THREE.JS SCENE ---
+      const container = document.getElementById("canvas-container");
+      const scene = new THREE.Scene();
+
+      // Dramatische zwarte mist om elementen op de achtergrond te verbergen
+      scene.fog = new THREE.FogExp2(0x050505, 0.06);
+
+      const camera = new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100,
+      );
+      camera.position.set(0, 0, 12);
+
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      container.appendChild(renderer.domElement);
+
+      // --- 2. LIGHTING (Dramatisch / Chiaroscuro) ---
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.05); // Nog donkerder voor meer drama
+      scene.add(ambientLight);
+
+      const spotLight = new THREE.SpotLight(0xffffff, 4.0); // Feller
+      spotLight.position.set(5, 12, 10);
+      spotLight.angle = Math.PI / 7;
+      spotLight.penumbra = 0.6; // Iets scherpere randen voor drama
+      spotLight.castShadow = true;
+      spotLight.shadow.mapSize.width = 1024;
+      spotLight.shadow.mapSize.height = 1024;
+      scene.add(spotLight);
+
+      const backLight = new THREE.PointLight(0x4466ff, 1.5, 25); // Iets sterker blauw contrast
+      backLight.position.set(-5, 2, -5);
+      scene.add(backLight);
+
+      // Rim light voor de 'silhouette'
+      const rimLight = new THREE.PointLight(0xffffff, 0.8, 15);
+      rimLight.position.set(0, 5, -5);
+      scene.add(rimLight);
+
+      // --- 3. LOAD MODELS ---
+      const loader = new THREE.GLTFLoader();
+      const bookObjects = []; // Wrappers for animation
+      const bookMeshes = []; // The actual models (for floating animation)
+
+      // Bestandsnamen precies zoals gevraagd, in volgorde van de slides
+      const bookData = [
+        { file: "Heldere hemel.glb", color: 0x88aaff },
+        { file: "Erfenis van spionnen.glb", color: 0xffaa88 },
+        { file: "Muurziek.glb", color: 0xaa88ff },
+      ];
+
+      // Functie om een model of een tijdelijke placeholder te maken
+      bookData.forEach((data, index) => {
+        // Wrapper group voor GSAP positionering
+        const group = new THREE.Group();
+        scene.add(group);
+        bookObjects.push(group);
+
+        // Binnenste group voor de zweef-animatie
+        const floatGroup = new THREE.Group();
+        group.add(floatGroup);
+        bookMeshes.push(floatGroup);
+
+        // Probeer het model te laden
+        loader.load(
+          data.file,
+          (gltf) => {
+            const model = gltf.scene;
+
+            // Schaduwen aanzetten voor alle meshes in het model
+            model.traverse((child) => {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+              }
+            });
+
+            // Centreer en schaal het model (aanpassen indien nodig)
+            model.scale.set(3.5, 3.5, 3.5);
+
+            // Roteer het model als het op zijn kant ligt (vaak nodig bij GLTF)
+            // Als de gebruiker de onderkant ziet, moeten we het 'omhoog' draaien
+            model.rotation.x = Math.PI / 2;
+
+            // Center the geometry
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            model.position.sub(center);
+
+            floatGroup.add(model);
+          },
+          undefined,
+          (error) => {
+            console.warn(
+              `Kon ${data.file} niet laden. Laadt een placeholder.`,
+              error,
+            );
+            // Fallback: Als het model niet lokaal is, toon een mooi afgewerkt blok
+            const geometry = new THREE.BoxGeometry(2.5, 3.5, 0.6);
+            const material = new THREE.MeshStandardMaterial({
+              color: data.color,
+              roughness: 0.2,
+              metalness: 0.1,
+            });
+            const placeholder = new THREE.Mesh(geometry, material);
+            placeholder.castShadow = true;
+            floatGroup.add(placeholder);
+          },
+        );
+      });
+
+      // Initiële posities (Slide 5: Alle boeken naast elkaar)
+      bookObjects[0].position.set(-4.5, 0, 0);
+      bookObjects[1].position.set(0, 0, 0);
+      bookObjects[2].position.set(4.5, 0, 0);
+
+      // --- 4. ANIMATIE LOGICA (GSAP) ---
+      let currentSlide = 0;
+      const totalSlides = 4;
+
+      function updateScene() {
+        // Update UI
+        document.querySelectorAll(".slide-content").forEach((el, index) => {
+          if (index === currentSlide) {
+            el.classList.add("active");
+          } else {
+            el.classList.remove("active");
+          }
+        });
+
+        // Update Buttons
+        document.getElementById("btn-prev").disabled = currentSlide === 0;
+        document.getElementById("btn-next").disabled =
+          currentSlide === totalSlides - 1;
+
+        // Animate 3D Models
+        if (currentSlide === 0) {
+          // Overview: Alle 3 zichtbaar in het midden
+          gsap.to(bookObjects[0].position, {
+            x: -4.5,
+            y: 0,
+            z: 0,
+            duration: 1.5,
+            ease: "power3.inOut",
+          });
+          gsap.to(bookObjects[1].position, {
+            x: 0,
+            y: 0,
+            z: 0,
+            duration: 1.5,
+            ease: "power3.inOut",
+          });
+          gsap.to(bookObjects[2].position, {
+            x: 4.5,
+            y: 0,
+            z: 0,
+            duration: 1.5,
+            ease: "power3.inOut",
+          });
+
+          bookObjects.forEach((book) => {
+            gsap.to(book.rotation, {
+              x: 0,
+              y: 0,
+              z: 0,
+              duration: 1.5,
+              ease: "power3.inOut",
+            });
+          });
+
+          // Verplaats spotlight naar het midden
+          gsap.to(spotLight.position, { x: 0, y: 10, z: 8, duration: 1.5 });
+        } else {
+          // Focus op één specifiek boek
+          const activeIndex = currentSlide - 1;
+
+          bookObjects.forEach((book, index) => {
+            if (index === activeIndex) {
+              // Breng actieve boek naar rechtsvoor (tekst staat links)
+              gsap.to(book.position, {
+                x: 4,
+                y: 0,
+                z: 2,
+                duration: 1.5,
+                ease: "power3.inOut",
+              });
+              // Roteer dramatisch naar de kijker/tekst
+              gsap.to(book.rotation, {
+                x: 0.1,
+                y: -0.5,
+                z: 0.05,
+                duration: 1.5,
+                ease: "power3.inOut",
+              });
+
+              // Verplaats spotlight zodat het perfect op dit boek valt
+              gsap.to(spotLight.position, { x: 5, y: 10, z: 8, duration: 1.5 });
+            } else {
+              // Duw andere boeken diep de mist in
+              gsap.to(book.position, {
+                x: (index - activeIndex) * 5,
+                y: -3,
+                z: -12,
+                duration: 1.5,
+                ease: "power3.inOut",
+              });
+              gsap.to(book.rotation, { y: Math.PI, duration: 1.5 });
+            }
+          });
+        }
+      }
+
+      // --- 5. CONTROLS ---
+      document.getElementById("btn-next").addEventListener("click", () => {
+        if (currentSlide < totalSlides - 1) {
+          currentSlide++;
+          updateScene();
+        }
+      });
+
+      document.getElementById("btn-prev").addEventListener("click", () => {
+        if (currentSlide > 0) {
+          currentSlide--;
+          updateScene();
+        }
+      });
+
+      // --- 6. RENDER LOOP (Zweef Effect) ---
+      const clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const time = clock.getElapsedTime();
+
+        // Continue, subtiele zweef en rotatie-animatie voor elk boek
+        bookMeshes.forEach((meshGroup, index) => {
+          // Zweven (Y-as)
+          meshGroup.position.y = Math.sin(time * 1.5 + index) * 0.15;
+          // Langzaam draaien om de eigen as voor extra detail
+          meshGroup.rotation.y = Math.sin(time * 0.5 + index) * 0.1;
+        });
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      // --- 7. RESIZE HANDLER ---
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // Start met de initiële state
+      updateScene();
+    </script>
+  </body>
+</html>

@@ -4,7 +4,7 @@ import { SNTPClient } from './sntp';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Clock, Star } from 'lucide-react';
 
-const SOCKET_URL = import.meta.env.PROD ? '/' : 'http://localhost:3001';
+const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 const STATES = {
   START: 'START',

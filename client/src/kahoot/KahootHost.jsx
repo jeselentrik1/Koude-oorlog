@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Clock, Star, Play, Check, ChevronRight } from 'lucide-react';
 import coldWarBg from '../assets/cold_war.jpeg';
 
-const SOCKET_URL = import.meta.env.PROD ? '/' : 'http://localhost:3001';
+const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 const STATES = {
   START: 'START',
