@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useLayoutEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { SlideContext } from './SlideContext';
 import Background from './Background';
+import AssetPreloader from './AssetPreloader';
 
 /** Design canvas: uniform scale to fit viewport (letterboxing via outer black frame). */
 export const DESIGN_WIDTH = 1920;
@@ -42,6 +43,11 @@ export default function Presentation({ slides, slideMetadata = {}, interstitials
   const [lastSectionBackground, setLastSectionBackground] = useState(null);
   const [scale, setScale] = useState(1);
   const [activeInterstitial, setActiveInterstitial] = useState(null);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+
+  const handleAssetsComplete = useCallback(() => {
+    setAssetsLoaded(true);
+  }, []);
 
   // Update lastSectionBackground based on slide sequence
   useEffect(() => {
@@ -191,7 +197,12 @@ export default function Presentation({ slides, slideMetadata = {}, interstitials
             <Background background={background} lastSectionBackground={lastSectionBackground} />
             
             <div className="relative z-10 w-full h-full">
-              {!isStarted ? (
+              {!assetsLoaded ? (
+                <div className="flex flex-col items-center justify-center h-full text-white bg-[#020617]">
+                  <h1 className="text-6xl font-black mb-12 tracking-tighter text-white/90 opacity-50">KOUDE OORLOG</h1>
+                  <AssetPreloader onComplete={handleAssetsComplete} />
+                </div>
+              ) : !isStarted ? (
                 <div className="flex flex-col items-center justify-center h-full text-white">
                   <h1 className="text-8xl font-black mb-12 tracking-tighter text-white/90">KOUDE OORLOG</h1>
                   
