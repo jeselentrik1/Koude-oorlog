@@ -24,6 +24,15 @@
       "doublePoints": false
     },
     {
+      "id": "q_berlin_wall",
+      "question": "Hoe lang was de Berlijnse Muur in totaal?",
+      "type": "multiple-choice",
+      "options": ["155km", "135km", "165km", "180km"],
+      "answer": "155km",
+      "timeLimit": 20,
+      "doublePoints": false
+    },
+    {
       "id": "q_ussr_soviet_same",
       "question": "Zijn USSR en Sovjet-Unie hetzelfde?",
       "type": "multiple-choice",

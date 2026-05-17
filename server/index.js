@@ -302,6 +302,27 @@ io.on('connection', (socket) => {
     const question = quizConfig.questions.find(q => q.id === questionId)
     if (!question) return
 
+    // Idempotency: if this exact question is already running for this session (e.g. the
+    // host's startup effect fired twice, or a duplicate event arrived from a flaky
+    // socket), just re-broadcast the *current* in-flight state instead of restarting it
+    // — that way players never lose their answers and the host's UI re-syncs cleanly.
+    if (
+      session.currentQuestion &&
+      session.currentQuestion.id === questionId &&
+      session.questionStartTime &&
+      performance.now() < session.questionEndTime
+    ) {
+      const { answer: existingAnswer, ...existingClient } = session.currentQuestion
+      socket.emit('host:question-start', {
+        ...existingClient,
+        answer: existingAnswer,
+        isFinal: !!session.currentQuestion.isFinal,
+        doublePoints: !!session.currentQuestion.doublePoints,
+        startTime: session.questionStartTime,
+      })
+      return
+    }
+
     // Shuffle options for this session's run of the question
     const shuffledQuestion = {
       ...question,
@@ -317,7 +338,7 @@ io.on('connection', (socket) => {
     session.currentQuestion = shuffledQuestion
     session.answersCount = 0
     session.isIdle = false
-    
+
     // 3 second delay before accepting answers
     const DELAY = 3000
     session.questionStartTime = performance.now() + DELAY

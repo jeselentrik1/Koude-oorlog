@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:simple": "vite build --config vite.config.simple.js",
+    "build:analyze": "vite build --config vite.config.analyze.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "NODE_ENV=development node --watch index.js",
-    "start": "NODE_ENV=production node index.js"
+    "start": "NODE_ENV=production node index.js",
+    "concat": "bash concat-sources.sh"
   },
   "dependencies": {
     "cors": "^2.8.6",

@@ -83,6 +83,11 @@ const interstitials = [
       <KahootHost questionIds={['q_nato_founded', 'q_ussr_soviet_same']} onComplete={onComplete} />
     )
   },
+  // Na slide 12: Berlijnse Muur
+  {
+    atIndex: 12,
+    component: ({ onComplete }) => <KahootHost questionId="q_berlin_wall" onComplete={onComplete} />
+  },
   // Na slide 15
   {
     atIndex: 15,

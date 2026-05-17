@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Clock, Star, Play, Check, ChevronRight, Crown, Award, Medal, Sparkles, Flag, Zap } from 'lucide-react';
 import { useAssetCache } from '../components/AssetContext';
@@ -60,6 +60,7 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
     oldLeaderboard,
     setOldLeaderboard,
     answerDistribution,
+    setAnswerDistribution,
     error,
     setError,
     startTime,
@@ -72,27 +73,65 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
   } = useKahootHost();
 
   const questionChain = useMemo(() => {
-    if (Array.isArray(questionIds) && questionIds.length > 0) return questionIds;
+    if (Array.isArray(questionIds) && questionIds.length > 0) return questionIds.filter(Boolean);
     if (questionId) return [questionId];
     return [];
   }, [questionIds, questionId]);
 
   const [activeQuestionId, setActiveQuestionId] = useState(() => questionChain[0] ?? null);
 
+  // If the parent ever swaps the question chain (e.g. interstitial replays), keep
+  // activeQuestionId in sync with the new first id. Mounting a fresh KahootHost is the
+  // common path, so this is a safety net for edge cases.
+  useEffect(() => {
+    const firstId = questionChain[0] ?? null;
+    if (firstId && firstId !== activeQuestionId && !questionChain.includes(activeQuestionId)) {
+      setActiveQuestionId(firstId);
+    }
+  }, [questionChain, activeQuestionId]);
+
   const [password, setPassword] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
   const [countdown, setCountdown] = useState(3);
   const [showNewLeaderboard, setShowNewLeaderboard] = useState(false);
+  const [hasCompleted, setHasCompleted] = useState(false);
 
+  // Refs to read latest values from socket-driven callbacks without re-binding.
   const gameStateRef = useRef(gameState);
   gameStateRef.current = gameState;
+  const currentQuestionRef = useRef(currentQuestion);
+  currentQuestionRef.current = currentQuestion;
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  // Per-instance set of questionIds we've already sent `host:start-question` for.
+  // This makes the start logic idempotent across re-renders, strict-mode double-effects,
+  // and any leftover gameState from a previous interstitial — without ever skipping a start.
+  const initiatedRef = useRef(new Set());
+
+  // Single source of truth for "this instance is done — bail out to the slide deck once".
+  const finishInterstitial = useCallback(() => {
+    if (hasCompleted) return;
+    // Reset game state to a neutral baseline so the next KahootHost instance that mounts
+    // (next interstitial) doesn't render leftover LEADERBOARD/RESULTS while it waits for
+    // the server to respond to its own host:start-question. LOADING shows a quiet spinner
+    // rather than the password screen.
+    setGameState(STATES.LOADING);
+    setAnswerDistribution({});
+    setOldLeaderboard([]);
+    setShowNewLeaderboard(false);
+    setHasCompleted(true);
+    if (onCompleteRef.current) {
+      try { onCompleteRef.current(); } catch { /* noop */ }
+    }
+  }, [hasCompleted, setGameState, setAnswerDistribution, setOldLeaderboard]);
 
   useEffect(() => {
     let timer;
     if ((gameState === STATES.COUNTDOWN || gameState === STATES.QUESTION) && sntp && startTime) {
       const updateTimers = () => {
         const serverNow = sntp.now();
-        
+
         if (gameState === STATES.COUNTDOWN) {
           const remaining = Math.max(0, startTime - serverNow);
           setCountdown(Math.ceil(remaining / 1000));
@@ -104,31 +143,66 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
           const remaining = Math.max(0, endTime - serverNow);
           setTimeLeft(remaining);
         }
-        
+
         timer = requestAnimationFrame(updateTimers);
       };
       timer = requestAnimationFrame(updateTimers);
     }
     return () => cancelAnimationFrame(timer);
-  }, [gameState, sntp, startTime, currentQuestion]);
+  }, [gameState, sntp, startTime, currentQuestion, setGameState]);
 
+  // Lobby auto-complete: once we've successfully joined a session, drop straight back to
+  // the slide deck so the audience sees a "waiting for players" lobby UI on their phones
+  // rather than the host's start screen blocking the presenter.
   useEffect(() => {
-    if (!socket) return;
-
-    if (isLobby && sid) {
-      onComplete();
-      return;
+    if (!isLobby || hasCompleted) return;
+    if (sid && socket) {
+      finishInterstitial();
     }
+  }, [isLobby, sid, socket, hasCompleted, finishInterstitial]);
 
-    if (!activeQuestionId || questions.length === 0) return;
+  // Robust question start: when we have everything we need (socket, sid, questions, and a
+  // target questionId), and we haven't already started this question for this instance,
+  // wipe any stale RESULTS/LEADERBOARD UI and fire `host:start-question`. This is what
+  // actually makes stacked-question interstitials work even after a previous quiz left
+  // gameState on LEADERBOARD.
+  useEffect(() => {
+    if (isLobby || hasCompleted) return;
+    if (!socket || !sid || !activeQuestionId) return;
+    if (questions.length === 0) return;
+    if (initiatedRef.current.has(activeQuestionId)) return;
+
+    const alreadyRunningSame =
+      currentQuestionRef.current?.id === activeQuestionId &&
+      (gameStateRef.current === STATES.COUNTDOWN || gameStateRef.current === STATES.QUESTION);
+
+    initiatedRef.current.add(activeQuestionId);
+
+    if (alreadyRunningSame) return;
 
     const q = questions.find((item) => item.id === activeQuestionId);
     if (q) setCurrentQuestion(q);
 
-    if (gameStateRef.current === STATES.START) {
-      startQuestion(activeQuestionId);
-    }
-  }, [socket, sid, activeQuestionId, questions, isLobby, startQuestion, setCurrentQuestion]);
+    // Slam the UI to a neutral loading state right now so the user never sees a stale
+    // leaderboard or results screen while we wait for `host:question-start` to come back.
+    setAnswerDistribution({});
+    setOldLeaderboard([]);
+    setShowNewLeaderboard(false);
+    setGameState(STATES.LOADING);
+    startQuestion(activeQuestionId);
+  }, [
+    socket,
+    sid,
+    activeQuestionId,
+    questions,
+    isLobby,
+    hasCompleted,
+    setCurrentQuestion,
+    setAnswerDistribution,
+    setOldLeaderboard,
+    setGameState,
+    startQuestion,
+  ]);
 
   const startQuiz = async () => {
     try {
@@ -143,23 +217,21 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
         return;
       }
       setSid(data.sid);
-      socket.emit('host:join', { sid: data.sid });
+      if (socket) socket.emit('host:join', { sid: data.sid });
       localStorage.setItem('kahoot_host_sid', data.sid);
-      
-      if (isLobby) {
-        onComplete();
-      } else if (activeQuestionId) {
-        startQuestion(activeQuestionId);
-      }
       setError('');
+      // Don't start the question here — the useEffect above will do it on the next render
+      // once `sid` propagates through context (the old direct call here silently failed
+      // because the context's `startQuestion` closure still saw the empty sid).
     } catch (err) {
-      setError('Failed to start quiz');
+      setError('Quiz starten mislukt');
     }
   };
 
   const isFinalQuestion = !!(currentQuestion && currentQuestion.isFinal);
 
-  const handleNextFromResults = () => {
+  const handleNextFromResults = useCallback(() => {
+    if (gameStateRef.current !== STATES.RESULTS) return;
     if (isFinalQuestion) {
       // Final question: skip the regular leaderboard and head straight to the podium
       // animation. We also tell the server to wrap up the quiz right away so every player
@@ -174,44 +246,88 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
     setTimeout(() => {
       setShowNewLeaderboard(true);
     }, 1500);
-  };
+  }, [isFinalQuestion, setGameState, endQuiz]);
 
-  const handleContinuePresenting = () => {
+  const handleContinuePresenting = useCallback(() => {
+    if (gameStateRef.current !== STATES.LEADERBOARD) return;
+
     const idx = questionChain.indexOf(activeQuestionId);
     const nextId =
       idx >= 0 && idx < questionChain.length - 1 ? questionChain[idx + 1] : null;
 
     if (nextId) {
+      // Switch to the next chained question. The start-question useEffect above will see
+      // a new activeQuestionId, reset the UI, and emit `host:start-question` itself —
+      // we just have to stage the data transitions cleanly.
       setShowNewLeaderboard(false);
       setOldLeaderboard([]);
+      setAnswerDistribution({});
+      setGameState(STATES.LOADING);
       const q = questions.find((item) => item.id === nextId);
       if (q) setCurrentQuestion(q);
       setActiveQuestionId(nextId);
-      startQuestion(nextId);
       return;
     }
 
     setIdle();
-    onComplete();
-  };
+    finishInterstitial();
+  }, [
+    activeQuestionId,
+    questionChain,
+    questions,
+    setIdle,
+    setCurrentQuestion,
+    setOldLeaderboard,
+    setAnswerDistribution,
+    setGameState,
+    finishInterstitial,
+  ]);
 
-  const handleFinishFromPodium = () => {
+  const handleFinishFromPodium = useCallback(() => {
     // host:end-quiz already fired when entering podium; this just leaves the interstitial.
-    onComplete();
-  };
+    finishInterstitial();
+  }, [finishInterstitial]);
 
-  // Handle reconnection timeout (already handled in context, but we can show it here if needed)
+  // Remote control from the presenter window (`/present/notes`). Pressing next/space on
+  // the second screen should drive the kahoot through its terminal states the same way
+  // clicking the on-screen button does. We intentionally ignore nav during COUNTDOWN /
+  // QUESTION (timer-driven) and START (needs password), and we never advance the slide
+  // deck from here — the deck's own listener handles that once `activeInterstitial` clears.
   useEffect(() => {
-    if (gameState === STATES.LOADING) {
-      const timer = setTimeout(() => {
-        if (gameState === STATES.LOADING) {
-          setGameState(STATES.START);
-          setError('Sessie herstellen mislukt');
-        }
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [gameState]);
+    if (!socket) return;
+    const onNav = ({ direction }) => {
+      if (direction !== 'next') return;
+      const state = gameStateRef.current;
+      if (state === STATES.RESULTS) {
+        handleNextFromResults();
+      } else if (state === STATES.LEADERBOARD) {
+        handleContinuePresenting();
+      } else if (state === STATES.PODIUM) {
+        handleFinishFromPodium();
+      }
+    };
+    socket.on('presenter:nav', onNav);
+    return () => {
+      socket.off('presenter:nav', onNav);
+    };
+  }, [socket, handleNextFromResults, handleContinuePresenting, handleFinishFromPodium]);
+
+  // Loading-state safety net: if we're stuck in LOADING for too long (e.g. reconnect
+  // timeout), drop back to the password screen so the host can recover instead of seeing
+  // an indefinite spinner.
+  useEffect(() => {
+    if (gameState !== STATES.LOADING) return;
+    const timer = setTimeout(() => {
+      if (gameStateRef.current !== STATES.LOADING) return;
+      // Only fall back to START if we don't have a session yet — if we do, the server
+      // just hasn't echoed `host:question-start` back yet and we don't want to clobber it.
+      if (!sid) {
+        setGameState(STATES.START);
+        setError('Sessie herstellen mislukt');
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [gameState, sid, setGameState, setError]);
 
   // UI Renderers
   return (
@@ -234,18 +350,20 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
           </div>
         )}
 
-        {gameState === STATES.LOADING && (
+        {(gameState === STATES.LOADING || (gameState === STATES.START && sid)) && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex flex-col items-center"
           >
             <div className="w-12 h-12 border-4 border-white/10 border-t-white rounded-full animate-spin mb-4" />
-            <p className="text-white/40 uppercase tracking-[0.2em] text-[10px] font-bold">Verbinden...</p>
+            <p className="text-white/40 uppercase tracking-[0.2em] text-[10px] font-bold">
+              {sid ? 'Volgende vraag laden...' : 'Verbinden...'}
+            </p>
           </motion.div>
         )}
 
-        {gameState === STATES.START && (
+        {gameState === STATES.START && !sid && (
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
