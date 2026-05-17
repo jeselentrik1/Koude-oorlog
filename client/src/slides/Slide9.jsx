@@ -1,7 +1,9 @@
 import Slide from '../components/Slide';
 import ironCurtainMap from '../assets/iron_curtain.svg';
+import { useAssetCache } from '../components/AssetContext';
 
 export default function Slide9() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className=" text-white">
       <div className="flex h-full">
@@ -30,8 +32,8 @@ export default function Slide9() {
           </div>
         </div>
         <div className="w-1/2 flex items-center justify-center p-12">
-          <div className="relative w-full aspect-square bg-slate-900/50 border-2 border-slate-800 rounded-lg overflow-hidden flex items-center justify-center p-4">
-             <img src={ironCurtainMap} alt="Iron Curtain Map" className="w-full h-full object-contain opacity-80" />
+          <div className="relative w-full rounded-lg overflow-hidden flex items-center justify-center">
+             <img src={getAssetUrl(ironCurtainMap)} alt="Iron Curtain Map" className="w-full h-full object-contain opacity-80" />
              <div className="absolute inset-0 pointer-events-none border border-white/5 rounded-lg" />
           </div>
         </div>

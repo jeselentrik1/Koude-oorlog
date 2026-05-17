@@ -17,16 +17,16 @@ export default function Slide27() {
             </li>
             <li className="flex items-start">
               <span className="text-red-600 mr-4 font-black">&gt;</span>
-              <p className="border-l-4 border-blue-600 pl-6 py-2 bg-blue-900/10">
-                Locatie: Duitsland en Oost-Europa.
+              <p>
+                <span className="text-white font-bold">Locatie:</span> Duitsland en Oost-Europa.
               </p>
             </li>
             <li className="flex items-start">
               <span className="text-red-600 mr-4 font-black">&gt;</span>
-              <p>Doel: Tonen dat de NAVO klaar is voor een aanval.</p>
+              <p><span className="text-white font-bold">Doel:</span> Tonen dat de NAVO klaar is voor een aanval.</p>
             </li>
           </ul>
-          <p className="text-lg text-slate-500 italic mt-8">
+          <p className="text-xl text-slate-300 italic mt-10">
             "Een duidelijke waarschuwing aan het adres van Rusland."
           </p>
         </div>

@@ -7,6 +7,7 @@ import coldWarImg from './assets/cold_war.jpeg';
 import tensionImg from './assets/tension.jpeg';
 import berlinWallImg from './assets/berlin_wall.jpeg';
 import nuclearImg from './assets/nuclear.jpeg';
+import theEndImg from './assets/the_end.jpg';
 
 // Import all 31 slides
 import Slide1 from './slides/Slide1';
@@ -55,7 +56,7 @@ const slideMetadata = {
   5: { isSection: true, background: { image: tensionImg, brightness: 0.3 } },
   11: { isSection: true, background: { image: berlinWallImg, brightness: 0.52 } },
   16: { isSection: true, background: { image: nuclearImg, brightness: 0.3 } },
-  22: { isSection: true },
+  22: { isSection: true, background: { image: theEndImg, brightness: 0.3 } },
   23: { background: { color: '#020202', plain: true } },
 };
 
@@ -102,30 +103,35 @@ function App() {
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
 
+  let content;
   if (currentPath === '/present') {
-    return (
-      <AssetProvider>
-        <Presentation 
-          slides={slides} 
-          slideMetadata={slideMetadata}
-          interstitials={interstitials}
-          navigate={(path) => {
-            window.history.pushState({}, '', path);
-            setCurrentPath(path);
-          }} 
-        />
-      </AssetProvider>
+    content = (
+      <Presentation 
+        slides={slides} 
+        slideMetadata={slideMetadata}
+        interstitials={interstitials}
+        navigate={(path) => {
+          window.history.pushState({}, '', path);
+          setCurrentPath(path);
+        }} 
+      />
+    );
+  } else if (currentPath === '/host-test') {
+    content = <KahootHostTest />;
+  } else {
+    content = (
+      <KahootApp navigate={(path) => {
+        window.history.pushState({}, '', path);
+        setCurrentPath(path);
+      }} />
     );
   }
 
-  if (currentPath === '/host-test') {
-    return <KahootHostTest />;
-  }
-
-  return <KahootApp navigate={(path) => {
-    window.history.pushState({}, '', path);
-    setCurrentPath(path);
-  }} />;
+  return (
+    <AssetProvider>
+      {content}
+    </AssetProvider>
+  );
 }
 
 export default App;

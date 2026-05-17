@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { SNTPClient } from './sntp';
 import { motion, AnimatePresence, animate } from 'framer-motion';
 import { User, Clock, CheckCircle2, XCircle, Trophy, Triangle, Diamond, Circle, Square } from 'lucide-react';
+import { useAssetCache } from '../components/AssetContext';
 import coldWarBg from '../assets/cold_war.jpeg';
 
 const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
@@ -18,6 +19,7 @@ const STATES = {
 };
 
 export default function KahootApp({ navigate }) {
+  const { getAssetUrl } = useAssetCache();
   const [socket, setSocket] = useState(null);
   const [sntp, setSntp] = useState(null);
   
@@ -188,7 +190,7 @@ export default function KahootApp({ navigate }) {
   return (
     <div 
       className="min-h-screen bg-cover bg-center relative text-white font-sans overflow-hidden"
-      style={{ backgroundImage: `url(${coldWarBg})` }}
+      style={{ backgroundImage: `url(${getAssetUrl(coldWarBg)})` }}
     >
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-0" />
       

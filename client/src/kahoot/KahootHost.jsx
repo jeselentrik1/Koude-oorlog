@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { SNTPClient } from './sntp';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Clock, Star, Play, Check, ChevronRight } from 'lucide-react';
+import { useAssetCache } from '../components/AssetContext';
 import coldWarBg from '../assets/cold_war.jpeg';
 
 const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
@@ -17,6 +18,7 @@ const STATES = {
 };
 
 export default function KahootHost({ questionId, isLobby, onComplete }) {
+  const { getAssetUrl } = useAssetCache();
   const [socket, setSocket] = useState(null);
   const [sntp, setSntp] = useState(null);
   const [gameState, setGameState] = useState(STATES.START);
@@ -194,7 +196,7 @@ export default function KahootHost({ questionId, isLobby, onComplete }) {
       {/* Dynamic Background */}
       <div className="absolute inset-0 z-0">
         <img 
-          src={coldWarBg} 
+          src={getAssetUrl(coldWarBg)} 
           alt="" 
           className="w-full h-full object-cover scale-110 blur-xl opacity-30" 
         />

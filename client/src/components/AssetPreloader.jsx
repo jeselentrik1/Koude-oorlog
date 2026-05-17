@@ -6,15 +6,20 @@ import { useAssetCache } from './AssetContext';
 // Import local assets to get their processed URLs
 import berlinWallImg from '../assets/berlin_wall.jpeg';
 import coldWarImg from '../assets/cold_war.jpeg';
+import conclusionImg from '../assets/conclusion.jpg';
 import familiesImg from '../assets/families.jpg';
+import ironCurtainMap from '../assets/iron_curtain.svg';
 import migImage from '../assets/mig_23.jpg';
+import natoLogo from '../assets/nato.svg';
 import nuclearImg from '../assets/nuclear.jpeg';
 import nuclearTest from '../assets/nuclear_test.png';
 import nuclearWeaponImg from '../assets/nuclear_weapon.jpg';
 import stasiImage from '../assets/stasi.webp';
 import tensionImg from '../assets/tension.jpeg';
+import theEndImg from '../assets/the_end.jpg';
 import usFlag from '../assets/us.webp';
 import ussrFlag from '../assets/ussr.png';
+import ussrLogo from '../assets/ussr.svg';
 import vrtNwsLogo from '../assets/vrt_nws.png';
 import wallImage from '../assets/wall.png';
 import wimImage from '../assets/wim_delaere.jpg';
@@ -23,15 +28,20 @@ const ASSETS = {
   images: [
     berlinWallImg,
     coldWarImg,
+    conclusionImg,
     familiesImg,
+    ironCurtainMap,
     migImage,
+    natoLogo,
     nuclearImg,
     nuclearTest,
     nuclearWeaponImg,
     stasiImage,
     tensionImg,
+    theEndImg,
     usFlag,
     ussrFlag,
+    ussrLogo,
     vrtNwsLogo,
     wallImage,
     wimImage,

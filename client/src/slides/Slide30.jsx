@@ -1,18 +1,23 @@
 import Slide from '../components/Slide';
+import conclusionImg from '../assets/conclusion.jpg';
+import { useAssetCache } from '../components/AssetContext';
 
 export default function Slide30() {
+  const { getAssetUrl } = useAssetCache();
   return (
     <Slide className=" text-white">
       <div className="flex h-full items-center">
         <div className="w-1/2 flex items-center justify-center p-12">
            <div className="relative">
-              <div className="text-[15rem] grayscale opacity-30">🥀</div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center">
-                 <div className="text-5xl font-black text-white/80 uppercase tracking-tighter mix-blend-difference">CONCLUSIE</div>
-              </div>
+              <img 
+                src={getAssetUrl(conclusionImg)} 
+                alt="Conclusion" 
+                className="w-full h-auto object-contain rounded-lg" 
+              />
            </div>
         </div>
         <div className="w-1/2 flex flex-col justify-center pl-12 border-l border-slate-800">
+          <h2 className="text-6xl font-black mb-12 uppercase tracking-tighter text-white/80">CONCLUSIE</h2>
           <div className="space-y-12 text-3xl text-slate-300">
             <p>Strijd tussen systemen maar de impact was menselijk</p>
             <p>Boeken gaven de kille theorie een <span className="text-white font-bold">menselijk gezicht</span>.</p>
