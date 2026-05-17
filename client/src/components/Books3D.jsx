@@ -311,22 +311,22 @@ export default function Books3D({ phase = 0 }) {
       speaker: 'Jess',
       title: 'Heldere hemel',
       subtitle: 'Tom Lanoye',
-      body1: 'Invalshoek 1: De onschuldige burger.',
+      body1: 'De onschuldige burger.',
       body2: 'De tragische focus op het onverwachte slachtoffer van het grote conflict. Hoe de gewone mens wordt meegesleurd in zaken die zijn macht te boven gaan.',
     },
     {
       speaker: 'Nour',
       title: 'Erfenis van spionnen',
       subtitle: 'John le Carré',
-      body1: 'Invalshoek 2: De wereld van spionage.',
+      body1: 'De wereld van spionage.',
       body2: 'De harde, onverbiddelijke realiteit van de Koude Oorlog en de verwoestende gevolgen van geheime operaties voor achtergebleven families.',
     },
     {
       speaker: 'Thibo',
       title: 'Muurziek',
       subtitle: 'Wouter Polspoel',
-      body1: 'Invalshoek 3: Het leven achter de Muur.',
-      body2: 'Een blik op Oost-Berlijn. De constante mentale druk, paranoia en het verstikkende leven onder een totalitaire dictatuur.',
+      body1: 'Het leven achter de Muur als journalist',
+      body2: 'We volgden Emma en haar familie op in Oost-Berlijn, die onder strenge controle van de Stasi leefden. Het boek toont heel goed hoe mensen in angst leefden en dat niemand te vertrouwen was.',
     },
   ];
 

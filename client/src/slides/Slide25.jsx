@@ -16,16 +16,16 @@ export default function Slide25() {
            <div className="space-y-8">
               <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800">
                  <h3 className="text-2xl font-bold mb-4 text-white uppercase tracking-wider">Michail Gorbatsjov</h3>
-                 <div className="space-y-4">
-                    <div className="flex items-center">
-                       <span className="text-red-500 mr-4 font-black">❯</span>
+                 <ul className="space-y-4">
+                    <li className="flex items-center">
+                       <span className="text-red-500 mr-4 font-black">&gt;</span>
                        <span className="text-xl"><span className="font-bold">Perestrojka</span> (Economische hervorming)</span>
-                    </div>
-                    <div className="flex items-center">
-                       <span className="text-red-500 mr-4 font-black">❯</span>
+                    </li>
+                    <li className="flex items-center">
+                       <span className="text-red-500 mr-4 font-black">&gt;</span>
                        <span className="text-xl"><span className="font-bold">Glasnost</span> (Openheid & Vrijheid)</span>
-                    </div>
-                 </div>
+                    </li>
+                 </ul>
               </div>
            </div>
            

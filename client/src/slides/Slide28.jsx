@@ -269,27 +269,27 @@ export default function Slide28() {
       <div className="flex h-full">
         <div className="w-1/2 flex flex-col justify-center pr-12 border-r border-slate-800">
           <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter">Een Nieuwe Koude Oorlog?</h2>
-          <div className="space-y-6 text-2xl text-slate-300">
-            <div className="flex items-start">
-               <span className="text-red-600 mr-4 font-black">❯</span>
+          <ul className="space-y-6 text-2xl text-slate-300">
+            <li className="flex items-start">
+               <span className="text-red-600 mr-4 font-black">&gt;</span>
                <p><span className="text-white font-bold">Parallellen met toen:</span> NAVO vs. Rusland.</p>
-            </div>
-            <div className="flex items-start">
-               <span className="text-red-600 mr-4 font-black">❯</span>
+            </li>
+            <li className="flex items-start">
+               <span className="text-red-600 mr-4 font-black">&gt;</span>
                <p><span className="text-white font-bold">Wapenwedloop:</span> In de ruimte en in de digitale wereld.</p>
-            </div>
-            <div className="flex items-start">
-               <span className="text-red-600 mr-4 font-black">❯</span>
+            </li>
+            <li className="flex items-start">
+               <span className="text-red-600 mr-4 font-black">&gt;</span>
                <p><span className="text-white font-bold">Cyberoorlog:</span> Desinformatie en sabotage.</p>
-            </div>
-            <div className="flex items-start">
-               <span className="text-red-600 mr-4 font-black">❯</span>
+            </li>
+            <li className="flex items-start">
+               <span className="text-red-600 mr-4 font-black">&gt;</span>
                <p><span className="text-white font-bold">Proxy-conflict:</span> De oorlog in Oekraïne.</p>
-            </div>
-          </div>
+            </li>
+          </ul>
         </div>
         <div className="w-1/2 flex flex-col justify-center pl-12 items-center">
-           <div className="relative w-full h-[500px] bg-[#0c0c0c] rounded-xl overflow-hidden border border-slate-700 font-mono text-xs xl:text-sm flex flex-col">
+           <div className="relative w-full h-[500px] bg-[#0c0c0c] rounded-lg overflow-hidden border border-slate-700 font-mono text-xs xl:text-sm flex flex-col">
               {/* Terminal Header */}
               <div className="bg-[#1a1a1a] px-4 py-2 flex items-center border-b border-slate-800">
                 <div className="flex space-x-2">

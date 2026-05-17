@@ -10,19 +10,28 @@ export default function Slide27() {
         <div className="w-1/2 flex flex-col justify-center pr-12">
           <div className="mb-4 text-blue-500 font-bold uppercase tracking-widest text-xl">VRT NWS // 2024-2026</div>
           <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter">Steadfast Defender</h2>
-          <div className="space-y-6 text-2xl text-slate-300">
-            <p>Grootste NAVO-oefening sinds de Koude Oorlog.</p>
-            <p className="border-l-4 border-blue-600 pl-6 py-2 bg-blue-900/10">
-              Locatie: Duitsland en Oost-Europa.
-            </p>
-            <p>Doel: Tonen dat de NAVO klaar is voor een aanval.</p>
-            <p className="text-lg text-slate-500 italic mt-8">
-              "Een duidelijke waarschuwing aan het adres van Rusland."
-            </p>
-          </div>
+          <ul className="space-y-6 text-2xl text-slate-300">
+            <li className="flex items-start">
+              <span className="text-red-600 mr-4 font-black">&gt;</span>
+              <p>Grootste NAVO-oefening sinds de Koude Oorlog.</p>
+            </li>
+            <li className="flex items-start">
+              <span className="text-red-600 mr-4 font-black">&gt;</span>
+              <p className="border-l-4 border-blue-600 pl-6 py-2 bg-blue-900/10">
+                Locatie: Duitsland en Oost-Europa.
+              </p>
+            </li>
+            <li className="flex items-start">
+              <span className="text-red-600 mr-4 font-black">&gt;</span>
+              <p>Doel: Tonen dat de NAVO klaar is voor een aanval.</p>
+            </li>
+          </ul>
+          <p className="text-lg text-slate-500 italic mt-8">
+            "Een duidelijke waarschuwing aan het adres van Rusland."
+          </p>
         </div>
         <div className="w-1/2 flex items-center justify-center p-12">
-           <div className="w-full aspect-[16/10] bg-white text-black rounded-xl shadow-2xl overflow-hidden flex flex-col border border-white/10">
+           <div className="w-full aspect-[16/10] bg-white text-black rounded-lg shadow-2xl overflow-hidden flex flex-col border border-white/10">
               {/* Safari Header */}
               <div className="h-10 bg-[#ebeced] flex items-center px-4 space-x-4 border-b border-gray-300">
                 <div className="flex space-x-2">

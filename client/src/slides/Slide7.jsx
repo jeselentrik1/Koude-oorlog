@@ -1,10 +1,11 @@
 import Slide from '../components/Slide';
+import natoLogo from '../assets/nato.svg';
 
 export default function Slide7() {
   return (
-    <Slide className="bg-blue-950 text-white">
+    <Slide className="text-white">
       <div className="flex h-full">
-        <div className="w-1/2 flex flex-col justify-center pr-12">
+        <div className="w-1/2 flex flex-col justify-center pl-12 pr-12">
           <h2 className="text-6xl font-black mb-8 uppercase tracking-tighter">Het Westen</h2>
           <div className="space-y-8 text-2xl text-blue-100">
             <div>
@@ -26,10 +27,8 @@ export default function Slide7() {
           </div>
         </div>
         <div className="w-1/2 flex items-center justify-center relative">
-          <div className="absolute inset-0 bg-blue-900/20 rounded-3xl border border-blue-500/30 rotate-3" />
-          <div className="relative z-10 flex flex-col items-center space-y-12">
-             <div className="text-9xl">🇺🇸</div>
-             <div className="text-4xl font-black border-4 border-white p-4">NATO</div>
+          <div className="relative z-10">
+             <img src={natoLogo} alt="NATO Logo" className="w-[450px] h-[450px] object-contain rounded-lg overflow-hidden drop-shadow-[0_20px_50px_rgba(59,130,246,0.3)]" />
           </div>
         </div>
       </div>

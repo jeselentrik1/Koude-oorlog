@@ -9,20 +9,20 @@ export default function Slide2() {
       <div className="flex h-full">
         <div className="w-1/2 flex flex-col justify-center pr-12 border-r border-white/5">
           <h2 className="text-5xl font-black mb-8 text-white uppercase tracking-tighter">Wat was de Koude Oorlog?</h2>
-          <div className="space-y-6 text-2xl text-slate-300">
-            <div className="flex items-start">
-              <span className="text-red-600 mr-4 font-black">❯</span>
+          <ul className="space-y-6 text-2xl text-slate-300">
+            <li className="flex items-start">
+              <span className="text-red-600 mr-4 font-black">&gt;</span>
               <span>Periode van wereldwijde spanning</span>
-            </div>
-            <div className="flex items-start">
-              <span className="text-red-600 mr-4 font-black">❯</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-red-600 mr-4 font-black">&gt;</span>
               <span>Na WOII tot begin jaren 90</span>
-            </div>
-            <div className="flex items-start">
-              <span className="text-red-600 mr-4 font-black">❯</span>
+            </li>
+            <li className="flex items-start">
+              <span className="text-red-600 mr-4 font-black">&gt;</span>
               <span>Twee grootmachten lijnrecht tegenover elkaar</span>
-            </div>
-          </div>
+            </li>
+          </ul>
         </div>
         <div className="w-1/2 flex flex-col justify-center pl-12 items-center">
           <img src={getAssetUrl(nuclearTest)} alt="Nuclear Test" className="w-full max-w-2xl mb-12 rounded-lg border border-white/10 shadow-2xl" />

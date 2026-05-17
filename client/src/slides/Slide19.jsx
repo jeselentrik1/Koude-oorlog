@@ -15,7 +15,7 @@ export default function Slide19() {
         
         <div className="flex items-center justify-center space-x-24 w-full max-w-4xl">
            <div className="flex flex-col items-center">
-              <img src={getAssetUrl(usFlag)} alt="USA Flag" className="w-40 h-auto object-contain mb-4 shadow-2xl" />
+              <img src={getAssetUrl(usFlag)} alt="USA Flag" className="w-40 h-auto object-contain mb-4 shadow-2xl rounded-lg" />
               <div className="text-xl font-black uppercase">USA</div>
            </div>
            
@@ -27,7 +27,7 @@ export default function Slide19() {
            </div>
 
            <div className="flex flex-col items-center">
-              <img src={getAssetUrl(ussrFlag)} alt="USSR Flag" className="w-32 h-auto object-contain mb-4 shadow-2xl" />
+              <img src={getAssetUrl(ussrFlag)} alt="USSR Flag" className="w-32 h-auto object-contain mb-4 shadow-2xl rounded-lg" />
               <div className="text-xl font-black uppercase">USSR</div>
            </div>
         </div>

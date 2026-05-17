@@ -14,7 +14,7 @@ export default function Slide30() {
         </div>
         <div className="w-1/2 flex flex-col justify-center pl-12 border-l border-slate-800">
           <div className="space-y-12 text-3xl text-slate-300">
-            <p>Geen directe strijd, wél miljoenen slachtoffers.</p>
+            <p>Strijd tussen systemen maar de impact was menselijk</p>
             <p>Boeken gaven de kille theorie een <span className="text-white font-bold">menselijk gezicht</span>.</p>
             <div className="h-px bg-slate-800" />
             <p className="text-white font-black uppercase tracking-tighter text-4xl leading-tight">
