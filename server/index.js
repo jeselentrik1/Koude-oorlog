@@ -8,6 +8,7 @@ import dotenv from 'dotenv'
 import fs from 'fs'
 import { performance } from 'perf_hooks'
 import { QuizStore } from './quizStore.js'
+import { PresenterStore, PRESENTER_SPEAKERS } from './presenterStore.js'
 
 dotenv.config()
 
@@ -24,6 +25,25 @@ const io = new Server(httpServer, {
 const quizConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'quizConfig.json'), 'utf8'))
 const store = new QuizStore(quizConfig)
 
+const presenter = new PresenterStore({
+  uri: process.env.MONGODB_URI || 'mongodb://localhost:27017',
+  dbName: process.env.MONGODB_DB || 'koude-oorlog',
+})
+
+presenter.connect().catch((err) => {
+  console.error('[presenter] failed to connect to MongoDB:', err.message)
+  console.error('[presenter] presenter view & note editing will not work until MongoDB is reachable.')
+})
+
+// Broadcast any presenter-store mutation to every connected client.
+presenter.onChange((kind, payload) => {
+  if (kind === 'state') {
+    io.emit('presenter:state', payload)
+  } else if (kind === 'note') {
+    io.emit('presenter:note', payload)
+  }
+})
+
 let activeSessionSid = null
 
 const isProd = process.env.NODE_ENV === 'production'
@@ -34,6 +54,36 @@ app.use(cors())
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, env: isProd ? 'production' : 'development' })
+})
+
+// -------- Presenter REST API --------
+
+app.get('/api/presenter/notes', async (_req, res) => {
+  if (!presenter.connected) return res.status(503).json({ error: 'Mongo not connected' })
+  try {
+    const notes = await presenter.getAllNotes()
+    res.json({ notes, speakers: PRESENTER_SPEAKERS })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.put('/api/presenter/notes/:slideKey', async (req, res) => {
+  if (!presenter.connected) return res.status(503).json({ error: 'Mongo not connected' })
+  const { slideKey } = req.params
+  const { speaker, notes } = req.body || {}
+  try {
+    await presenter.setNote(slideKey, { speaker, notes })
+    const updated = await presenter.getNote(slideKey)
+    res.json({ ok: true, slideKey, ...updated })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.get('/api/presenter/state', (_req, res) => {
+  if (!presenter.connected) return res.status(503).json({ error: 'Mongo not connected' })
+  res.json(presenter.publicState())
 })
 
 // Start quiz session
@@ -65,6 +115,47 @@ io.on('connection', (socket) => {
   socket.on('sync:ping', ({ t1 }) => {
     const t2 = performance.now()
     socket.emit('sync:pong', { t1, t2, t3: performance.now() })
+  })
+
+  // -------- Presenter sync --------
+
+  // Send a fresh snapshot to whoever just joined (presenter view, edit panel, main slide deck).
+  socket.on('presenter:hello', async () => {
+    if (!presenter.connected) {
+      socket.emit('presenter:unavailable', { reason: 'Mongo not connected' })
+      return
+    }
+    const notes = await presenter.getAllNotes()
+    socket.emit('presenter:snapshot', {
+      state: presenter.publicState(),
+      notes,
+      speakers: PRESENTER_SPEAKERS,
+    })
+  })
+
+  // The main presentation broadcasts which (slide, subslide) is currently shown.
+  socket.on('presenter:slide-change', async ({ slideKey }) => {
+    if (typeof slideKey !== 'string') return
+    await presenter.setCurrentSlide(slideKey)
+  })
+
+  // Edit panel saving notes (also available via REST for parity)
+  socket.on('presenter:set-note', async ({ slideKey, speaker, notes }) => {
+    if (typeof slideKey !== 'string') return
+    await presenter.setNote(slideKey, { speaker, notes })
+  })
+
+  // Timer controls (issued by the presenter view / edit panel)
+  socket.on('presenter:timer', async ({ action }) => {
+    if (action === 'start') await presenter.startTimer()
+    else if (action === 'pause') await presenter.pauseTimer()
+    else if (action === 'reset') await presenter.resetTimer()
+  })
+
+  // Remote prev/next for the slide deck (presenter view → all clients; main /present reacts)
+  socket.on('presenter:nav', ({ direction }) => {
+    if (direction !== 'next' && direction !== 'prev') return
+    io.emit('presenter:nav', { direction })
   })
 
   // If a quiz is already active, tell the new client

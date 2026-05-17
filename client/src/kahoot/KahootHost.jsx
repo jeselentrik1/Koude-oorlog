@@ -1,41 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
-import { SNTPClient } from './sntp';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Users, Clock, Star, Play, Check, ChevronRight } from 'lucide-react';
 import { useAssetCache } from '../components/AssetContext';
+import { useKahootHost, STATES } from './KahootHostContext';
 import coldWarBg from '../assets/cold_war.jpeg';
 
 const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
-const STATES = {
-  START: 'START',
-  COUNTDOWN: 'COUNTDOWN',
-  QUESTION: 'QUESTION',
-  RESULTS: 'RESULTS', // showing bar charts
-  LEADERBOARD: 'LEADERBOARD',
-  FINAL: 'FINAL'
-};
-
 export default function KahootHost({ questionId, isLobby, onComplete }) {
   const { getAssetUrl } = useAssetCache();
-  const [socket, setSocket] = useState(null);
-  const [sntp, setSntp] = useState(null);
-  const [gameState, setGameState] = useState(STATES.START);
+  const {
+    socket,
+    sntp,
+    gameState,
+    setGameState,
+    sid,
+    setSid,
+    questions,
+    playerCount,
+    leaderboard,
+    oldLeaderboard,
+    setOldLeaderboard,
+    answerDistribution,
+    error,
+    setError,
+    startTime,
+    setStartTime,
+    currentQuestion,
+    setCurrentQuestion,
+    startQuestion,
+    setIdle
+  } = useKahootHost();
+
   const [password, setPassword] = useState('');
-  const [sid, setSid] = useState('');
-  const [questions, setQuestions] = useState([]);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [playerCount, setPlayerCount] = useState({ count: 0, total: 0 });
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [oldLeaderboard, setOldLeaderboard] = useState([]);
-  const [answerDistribution, setAnswerDistribution] = useState({});
-  const [error, setError] = useState('');
-  const [countdown, setCountdown] = useState(3);
-  const [startTime, setStartTime] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
-  
-  // To handle the two-step leaderboard animation
+  const [countdown, setCountdown] = useState(3);
   const [showNewLeaderboard, setShowNewLeaderboard] = useState(false);
 
   useEffect(() => {
@@ -47,7 +46,6 @@ export default function KahootHost({ questionId, isLobby, onComplete }) {
         if (gameState === STATES.COUNTDOWN) {
           const remaining = Math.max(0, startTime - serverNow);
           setCountdown(Math.ceil(remaining / 1000));
-          // State transition is handled by server event now, or we can force it:
           if (remaining <= 0 && gameState === STATES.COUNTDOWN) {
             setGameState(STATES.QUESTION);
           }
@@ -65,87 +63,24 @@ export default function KahootHost({ questionId, isLobby, onComplete }) {
   }, [gameState, sntp, startTime, currentQuestion]);
 
   useEffect(() => {
-    const newSocket = io(SOCKET_URL);
-    setSocket(newSocket);
+    if (!socket) return;
 
-    const newSntp = new SNTPClient(newSocket);
-    setSntp(newSntp);
-    newSntp.startSync(1000);
+    if (isLobby && sid) {
+      onComplete();
+      return;
+    }
 
-    newSocket.on('host:reconnected', (data) => {
-      setSid(data.sid);
-      setQuestions(data.questions);
-      setPlayerCount(data.playerCount);
-      setError('');
+    if (questionId && questions.length > 0) {
+      const q = questions.find(q => q.id === questionId);
+      setCurrentQuestion(q);
       
-      // If we are in lobby mode, skip it and go to presentation
-      if (isLobby) {
-        onComplete();
-      } else if (questionId) {
-        // Find the question
-        const q = data.questions.find(q => q.id === questionId);
-        setCurrentQuestion(q);
-        
-        // Check if question is already active
-        if (data.currentState === 'COUNTDOWN' || data.currentState === 'QUESTION') {
-           setGameState(STATES[data.currentState]);
-           setStartTime(data.startTime);
-        } else {
-           // Start this question
-           newSocket.emit('host:start-question', { sid: data.sid, questionId });
-        }
+      // If we are already in a state for this question, we don't need to restart it
+      // but we should check if the current question in the context matches
+      if (gameState === STATES.START) {
+        startQuestion(questionId);
       }
-    });
-
-    newSocket.on('connect', () => {
-      const storedSid = localStorage.getItem('kahoot_host_sid');
-      if (storedSid) {
-        newSocket.emit('host:reconnect', { sid: storedSid });
-      }
-    });
-
-    newSocket.on('host:question-start', (data) => {
-      setStartTime(data.startTime);
-      setGameState(STATES.COUNTDOWN);
-    });
-
-    newSocket.on('host:player-answered', (data) => {
-      setPlayerCount(data);
-    });
-
-    newSocket.on('host:player-joined', (data) => {
-      setPlayerCount(prev => ({ ...prev, total: data.count }));
-    });
-
-    newSocket.on('question:leaderboard', (data) => {
-      if (data.top5) {
-        setOldLeaderboard(leaderboard.length > 0 ? leaderboard : data.top5.map(p => ({...p, score: p.score - (p.lastPoints || 0)})));
-        setLeaderboard(data.top5);
-        setAnswerDistribution(data.answerDistribution || {});
-      } else {
-        setOldLeaderboard(leaderboard);
-        setLeaderboard(data);
-      }
-      setGameState(STATES.RESULTS);
-    });
-
-    newSocket.on('quiz:final-leaderboard', (lb) => {
-      setLeaderboard(lb);
-      setGameState(STATES.FINAL);
-    });
-
-    newSocket.on('error', ({ message }) => {
-      setError(message);
-      if (['Session expired', 'Invalid session'].includes(message)) {
-        localStorage.removeItem('kahoot_host_sid');
-        setGameState(STATES.START);
-      }
-    });
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, [questionId, isLobby]);
+    }
+  }, [socket, sid, questionId, questions, isLobby]);
 
   const startQuiz = async () => {
     try {
@@ -166,9 +101,7 @@ export default function KahootHost({ questionId, isLobby, onComplete }) {
       if (isLobby) {
         onComplete();
       } else if (questionId) {
-        const q = questions.find(q => q.id === questionId);
-        setCurrentQuestion(q);
-        socket.emit('host:start-question', { sid: data.sid, questionId });
+        startQuestion(questionId);
       }
       setError('');
     } catch (err) {
@@ -179,16 +112,28 @@ export default function KahootHost({ questionId, isLobby, onComplete }) {
   const handleNextFromResults = () => {
     setGameState(STATES.LEADERBOARD);
     setShowNewLeaderboard(false);
-    // Trigger animation after a short delay
     setTimeout(() => {
       setShowNewLeaderboard(true);
     }, 1500);
   };
 
   const handleContinuePresenting = () => {
-    socket.emit('host:set-idle', { sid });
+    setIdle();
     onComplete();
   };
+
+  // Handle reconnection timeout (already handled in context, but we can show it here if needed)
+  useEffect(() => {
+    if (gameState === STATES.LOADING) {
+      const timer = setTimeout(() => {
+        if (gameState === STATES.LOADING) {
+          setGameState(STATES.START);
+          setError('Sessie herstellen mislukt');
+        }
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState]);
 
   // UI Renderers
   return (
@@ -209,6 +154,17 @@ export default function KahootHost({ questionId, isLobby, onComplete }) {
           <div className="absolute top-8 bg-red-500/20 border border-red-500 text-red-200 p-4 rounded-lg backdrop-blur-md">
             {error}
           </div>
+        )}
+
+        {gameState === STATES.LOADING && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center"
+          >
+            <div className="w-12 h-12 border-4 border-white/10 border-t-white rounded-full animate-spin mb-4" />
+            <p className="text-white/40 uppercase tracking-[0.2em] text-[10px] font-bold">Verbinden...</p>
+          </motion.div>
         )}
 
         {gameState === STATES.START && (

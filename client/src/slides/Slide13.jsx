@@ -1,60 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useSlideContext } from '../components/SlideContext';
+import { useSubslide } from '../components/SubslideContext';
 import BerlinWall3D from '../components/BerlinWall3D';
 import { motion } from 'framer-motion';
 
+const BERLIN_SUBSLIDES = 7;
+
+function berlinPhaseFromSubslide(si) {
+  if (si <= 3) return si;
+  if (si <= 5) return 4;
+  return 5;
+}
+
 export default function Slide13() {
-  const [phase, setPhase] = useState(0);
-  const [phase4WallDrawStarted, setPhase4WallDrawStarted] = useState(false);
+  const { subslideIndex } = useSubslide();
   const { setBackground, goToNextSlide } = useSlideContext();
   const [isExiting, setIsExiting] = useState(false);
+
+  const phase = berlinPhaseFromSubslide(subslideIndex);
+  const phase4WallDrawStarted = subslideIndex >= 5;
 
   useEffect(() => {
     setBackground({ color: '#050608', plain: true });
   }, [setBackground]);
 
-  useEffect(() => {
-    if (phase !== 4) setPhase4WallDrawStarted(false);
-  }, [phase]);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') {
-        e.stopImmediatePropagation();
-        if (phase === 4 && !phase4WallDrawStarted) {
-          setPhase4WallDrawStarted(true);
-          return;
-        }
-        if (phase < 5) {
-          setPhase((p) => p + 1);
-        }
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        if (phase > 0) {
-          e.stopImmediatePropagation();
-          setPhase((p) => p - 1);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown, true);
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [phase, phase4WallDrawStarted]);
-
-  const handleAdvance = (e) => {
+  const handleClick = (e) => {
     e.stopPropagation();
-    if (phase === 4 && !phase4WallDrawStarted) {
-      setPhase4WallDrawStarted(true);
-      return;
-    }
-    if (phase < 5) {
-      setPhase((p) => p + 1);
+    if (subslideIndex < BERLIN_SUBSLIDES - 1) {
+      goToNextSlide();
     }
   };
 
   const handleWallDrawComplete = () => {
-    setPhase(5);
+    goToNextSlide();
   };
 
   const handleFinalPhaseEnd = () => {
@@ -73,7 +51,7 @@ export default function Slide13() {
       animate={{ opacity: isExiting ? 0 : 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 1, ease: 'easeInOut' }}
-      onClick={handleAdvance}
+      onClick={handleClick}
     >
       <BerlinWall3D
         phase={phase}
@@ -84,3 +62,5 @@ export default function Slide13() {
     </motion.div>
   );
 }
+
+Slide13.subslides = BERLIN_SUBSLIDES;

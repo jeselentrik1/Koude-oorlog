@@ -51,3 +51,29 @@ h1, h2, h3 {
   pointer-events: none;
   z-index: 100;
 }
+
+/* Rich text editor placeholder when empty */
+.rte-editor:empty::before {
+  content: attr(data-placeholder);
+  color: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+}
+
+/* Render speaker notes as readable rich content */
+.notes-render h2 { font-size: 1.5rem; font-weight: 800; margin: 0.5rem 0 0.25rem; letter-spacing: -0.02em; }
+.notes-render h3 { font-size: 1.2rem; font-weight: 700; margin: 0.5rem 0 0.25rem; letter-spacing: -0.01em; }
+.notes-render p  { margin: 0.4rem 0; }
+.notes-render ul { list-style: disc; padding-left: 1.4rem; margin: 0.4rem 0; }
+.notes-render ol { list-style: decimal; padding-left: 1.4rem; margin: 0.4rem 0; }
+.notes-render li { margin: 0.15rem 0; }
+.notes-render blockquote {
+  border-left: 3px solid rgba(255,255,255,0.3);
+  padding-left: 0.75rem;
+  margin: 0.5rem 0;
+  font-style: italic;
+  color: rgba(255,255,255,0.85);
+}
+.notes-render strong { color: #fff; font-weight: 800; }
+.notes-render em     { color: rgba(255,255,255,0.95); }
+.notes-render u      { text-decoration: underline; text-decoration-color: rgba(255,255,255,0.6); }
+

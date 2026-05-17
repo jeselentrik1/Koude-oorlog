@@ -1,0 +1,161 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
+import { SNTPClient } from './sntp';
+
+const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+
+const KahootHostContext = createContext(null);
+
+export const STATES = {
+  LOADING: 'LOADING',
+  START: 'START',
+  COUNTDOWN: 'COUNTDOWN',
+  QUESTION: 'QUESTION',
+  RESULTS: 'RESULTS',
+  LEADERBOARD: 'LEADERBOARD',
+  FINAL: 'FINAL'
+};
+
+export function KahootHostProvider({ children }) {
+  const [socket, setSocket] = useState(null);
+  const [sntp, setSntp] = useState(null);
+  const [gameState, setGameState] = useState(STATES.START);
+  const [sid, setSid] = useState('');
+  const [questions, setQuestions] = useState([]);
+  const [playerCount, setPlayerCount] = useState({ count: 0, total: 0 });
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [oldLeaderboard, setOldLeaderboard] = useState([]);
+  const [answerDistribution, setAnswerDistribution] = useState({});
+  const [error, setError] = useState('');
+  const [startTime, setStartTime] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+
+  useEffect(() => {
+    const newSocket = io(SOCKET_URL);
+    setSocket(newSocket);
+
+    const newSntp = new SNTPClient(newSocket);
+    setSntp(newSntp);
+    newSntp.startSync(1000);
+
+    newSocket.on('connect', () => {
+      const storedSid = localStorage.getItem('kahoot_host_sid');
+      if (storedSid) {
+        setGameState(STATES.LOADING);
+        newSocket.emit('host:reconnect', { sid: storedSid });
+      }
+    });
+
+    newSocket.on('host:reconnected', (data) => {
+      setSid(data.sid);
+      setQuestions(data.questions);
+      setPlayerCount(data.playerCount);
+      setError('');
+      
+      if (data.currentState && STATES[data.currentState]) {
+        setGameState(STATES[data.currentState]);
+        if (data.startTime) setStartTime(data.startTime);
+      } else {
+        setGameState(STATES.START);
+      }
+    });
+
+    newSocket.on('host:join-success', (data) => {
+      setSid(data.sid);
+      localStorage.setItem('kahoot_host_sid', data.sid);
+      setGameState(STATES.START);
+    });
+
+    newSocket.on('host:question-start', (data) => {
+      setStartTime(data.startTime);
+      setGameState(STATES.COUNTDOWN);
+    });
+
+    newSocket.on('host:player-answered', (data) => {
+      setPlayerCount(data);
+    });
+
+    newSocket.on('host:player-joined', (data) => {
+      setPlayerCount(prev => ({ ...prev, total: data.count }));
+    });
+
+    newSocket.on('question:leaderboard', (data) => {
+      if (data.top5) {
+        setOldLeaderboard(prev => prev.length > 0 ? prev : data.top5.map(p => ({...p, score: p.score - (p.lastPoints || 0)})));
+        setLeaderboard(data.top5);
+        setAnswerDistribution(data.answerDistribution || {});
+      } else {
+        setLeaderboard(data);
+      }
+      setGameState(STATES.RESULTS);
+    });
+
+    newSocket.on('quiz:final-leaderboard', (lb) => {
+      setLeaderboard(lb);
+      setGameState(STATES.FINAL);
+    });
+
+    newSocket.on('error', ({ message }) => {
+      setError(message);
+      if (['Session expired', 'Invalid session'].includes(message)) {
+        localStorage.removeItem('kahoot_host_sid');
+        setGameState(STATES.START);
+      }
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
+  const startQuestion = (questionId) => {
+    if (socket && sid) {
+      socket.emit('host:start-question', { sid, questionId });
+    }
+  };
+
+  const setIdle = () => {
+    if (socket && sid) {
+      socket.emit('host:set-idle', { sid });
+    }
+  };
+
+  const value = {
+    socket,
+    sntp,
+    gameState,
+    setGameState,
+    sid,
+    setSid,
+    questions,
+    playerCount,
+    leaderboard,
+    setLeaderboard,
+    oldLeaderboard,
+    setOldLeaderboard,
+    answerDistribution,
+    setAnswerDistribution,
+    error,
+    setError,
+    startTime,
+    setStartTime,
+    currentQuestion,
+    setCurrentQuestion,
+    startQuestion,
+    setIdle
+  };
+
+  return (
+    <KahootHostContext.Provider value={value}>
+      {children}
+    </KahootHostContext.Provider>
+  );
+}
+
+export function useKahootHost() {
+  const context = useContext(KahootHostContext);
+  if (!context) {
+    throw new Error('useKahootHost must be used within a KahootHostProvider');
+  }
+  return context;
+}

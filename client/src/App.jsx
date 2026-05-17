@@ -1,7 +1,8 @@
 import Presentation from './components/Presentation';
+import PresenterView from './components/PresenterView';
 import KahootApp from './kahoot/KahootApp';
 import KahootHostTest from './kahoot/KahootHostTest';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { AssetProvider } from './components/AssetContext';
 import coldWarImg from './assets/cold_war.jpeg';
 import tensionImg from './assets/tension.jpeg';
@@ -62,6 +63,7 @@ const slideMetadata = {
 
 // Interactive sections to insert between slides
 import KahootHost from './kahoot/KahootHost';
+import { KahootHostProvider } from './kahoot/KahootHostContext';
 
 const interstitials = [
   // First interstitial is the Lobby before the presentation starts
@@ -103,21 +105,39 @@ function App() {
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
 
+  // Lightweight slide metadata exposed to the presenter window (name + subslides
+  // count). We don't load the full slide React components into the presenter
+  // popup since it doesn't render them — it only mirrors them via socket.
+  const slidesMeta = useMemo(() => slides.map((SlideComp, idx) => ({
+    name: SlideComp?.title || `Slide ${idx + 1}`,
+    subslides: Number.isFinite(SlideComp?.subslides) && SlideComp.subslides > 0
+      ? Math.floor(SlideComp.subslides)
+      : 1,
+  })), []);
+
   let content;
-  if (currentPath === '/present') {
+  if (currentPath === '/present/notes') {
+    content = <PresenterView slidesMeta={slidesMeta} />;
+  } else if (currentPath === '/present') {
     content = (
-      <Presentation 
-        slides={slides} 
-        slideMetadata={slideMetadata}
-        interstitials={interstitials}
-        navigate={(path) => {
-          window.history.pushState({}, '', path);
-          setCurrentPath(path);
-        }} 
-      />
+      <KahootHostProvider>
+        <Presentation 
+          slides={slides} 
+          slideMetadata={slideMetadata}
+          interstitials={interstitials}
+          navigate={(path) => {
+            window.history.pushState({}, '', path);
+            setCurrentPath(path);
+          }} 
+        />
+      </KahootHostProvider>
     );
   } else if (currentPath === '/host-test') {
-    content = <KahootHostTest />;
+    content = (
+      <KahootHostProvider>
+        <KahootHostTest />
+      </KahootHostProvider>
+    );
   } else {
     content = (
       <KahootApp navigate={(path) => {
