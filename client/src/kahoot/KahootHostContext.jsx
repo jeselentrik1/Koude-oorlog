@@ -13,6 +13,7 @@ export const STATES = {
   QUESTION: 'QUESTION',
   RESULTS: 'RESULTS',
   LEADERBOARD: 'LEADERBOARD',
+  PODIUM: 'PODIUM',
   FINAL: 'FINAL'
 };
 
@@ -51,6 +52,12 @@ export function KahootHostProvider({ children }) {
       setQuestions(data.questions);
       setPlayerCount(data.playerCount);
       setError('');
+
+      // Mid-question reconnects must use the *exact* shuffled options the players saw,
+      // otherwise the host renders option colors/positions out of sync with the players.
+      if (data.activeQuestion) {
+        setCurrentQuestion(data.activeQuestion);
+      }
       
       if (data.currentState && STATES[data.currentState]) {
         setGameState(STATES[data.currentState]);
@@ -60,6 +67,10 @@ export function KahootHostProvider({ children }) {
       }
     });
 
+    newSocket.on('host:questions', (qs) => {
+      setQuestions(qs);
+    });
+
     newSocket.on('host:join-success', (data) => {
       setSid(data.sid);
       localStorage.setItem('kahoot_host_sid', data.sid);
@@ -67,8 +78,22 @@ export function KahootHostProvider({ children }) {
     });
 
     newSocket.on('host:question-start', (data) => {
+      // CRITICAL: replace currentQuestion with the server-shuffled options the players also
+      // received, so option positions/colors/shapes match across host and player screens.
+      setCurrentQuestion({
+        id: data.id,
+        question: data.question,
+        options: data.options,
+        answer: data.answer,
+        timeLimit: data.timeLimit,
+        isFinal: !!data.isFinal,
+        doublePoints: !!data.doublePoints,
+      });
       setStartTime(data.startTime);
       setGameState(STATES.COUNTDOWN);
+      // Fresh question = fresh leaderboard animation state (needed for back-to-back questions).
+      setOldLeaderboard([]);
+      setAnswerDistribution({});
     });
 
     newSocket.on('host:player-answered', (data) => {
@@ -91,8 +116,10 @@ export function KahootHostProvider({ children }) {
     });
 
     newSocket.on('quiz:final-leaderboard', (lb) => {
+      // Update the leaderboard with the *complete* final standings (full list, not just top 5).
+      // We don't force a state transition here — the active host UI is in charge of moving to
+      // PODIUM / FINAL so we don't fight whatever animation is currently running.
       setLeaderboard(lb);
-      setGameState(STATES.FINAL);
     });
 
     newSocket.on('error', ({ message }) => {
@@ -120,6 +147,15 @@ export function KahootHostProvider({ children }) {
     }
   };
 
+  const endQuiz = () => {
+    if (socket && sid) {
+      socket.emit('host:end-quiz', { sid });
+    }
+    // Clear local host session so the next quiz starts fresh.
+    localStorage.removeItem('kahoot_host_sid');
+    setSid('');
+  };
+
   const value = {
     socket,
     sntp,
@@ -142,7 +178,8 @@ export function KahootHostProvider({ children }) {
     currentQuestion,
     setCurrentQuestion,
     startQuestion,
-    setIdle
+    setIdle,
+    endQuiz
   };
 
   return (

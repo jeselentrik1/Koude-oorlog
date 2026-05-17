@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Monitor, PanelRight } from 'lucide-react';
+import { PanelRight } from 'lucide-react';
 import { SlideContext } from './SlideContext';
 import { SubslideContext } from './SubslideContext';
 import Background from './Background';
@@ -356,7 +356,6 @@ function PresentationInner({ slides, slideMetadata = {}, interstitials = [], nav
               {isStarted && !activeInterstitial && (
                 <PresenterToolbar
                   showEditPanelButton={isEditMode && !editPanelOpen}
-                  onOpenPresenter={openPresenterWindow}
                   onOpenEditPanel={() => setEditPanelOpen(true)}
                 />
               )}
@@ -396,20 +395,13 @@ function PresentationInner({ slides, slideMetadata = {}, interstitials = [], nav
   );
 }
 
-function PresenterToolbar({ showEditPanelButton, onOpenPresenter, onOpenEditPanel }) {
+function PresenterToolbar({ showEditPanelButton, onOpenEditPanel }) {
   return (
     <div
       data-no-slide
       onClick={(e) => e.stopPropagation()}
       className="absolute bottom-6 right-6 z-40 flex gap-2"
     >
-      <button
-        onClick={onOpenPresenter}
-        title="Open presenteermodus op tweede scherm"
-        className="flex items-center gap-2 bg-black/60 hover:bg-black/80 backdrop-blur-xl border border-white/10 text-white/80 hover:text-white px-4 py-2.5 rounded-xl text-xs uppercase tracking-[0.2em] font-black transition-all active:scale-95 shadow-2xl"
-      >
-        <Monitor className="w-4 h-4" /> Presenteermodus
-      </button>
       {showEditPanelButton && (
         <button
           onClick={onOpenEditPanel}

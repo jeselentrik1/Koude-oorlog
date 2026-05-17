@@ -318,7 +318,7 @@ function NextSlidePreview({ nextNote, nextSlideKey, slidesMeta }) {
       </div>
       {nextNote?.notes && nextNote.notes.replace(/<[^>]+>/g, '').trim() ? (
         <div
-          className="notes-render mt-2 text-sm text-white/60 line-clamp-3 max-h-20 overflow-hidden"
+          className="notes-render mt-2 text-sm text-white/80 line-clamp-3 max-h-20 overflow-hidden"
           dangerouslySetInnerHTML={{ __html: nextNote.notes }}
         />
       ) : (

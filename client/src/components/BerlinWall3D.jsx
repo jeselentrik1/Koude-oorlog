@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const CONFIG = {
   wallColor: 0xff1e46,
-  mapColor: 0x1a1f26,
+  mapColor: 0x4a525d,
   groundColor: 0x050608,
   extrudeDepth: 10,
   previewWallColor: 0x5a6478,
@@ -145,7 +145,7 @@ export default function BerlinWall3D({
       'display:block;position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;';
     container.appendChild(canvas);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
     scene.add(ambientLight);
 
     const spotLight = new THREE.SpotLight(0xffffff, 1.5);
@@ -179,8 +179,9 @@ export default function BerlinWall3D({
         });
         const material = new THREE.MeshStandardMaterial({
           color: CONFIG.mapColor,
-          roughness: 0.6,
-          metalness: 0.1,
+          roughness: 0.5,
+          metalness: 0.15,
+          emissive: 0x0a0a0a,
         });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.scale.set(0.1, -0.1, 1);
@@ -495,14 +496,14 @@ export default function BerlinWall3D({
         westMeshesRef.current.forEach((m) =>
           m.material.color.lerpColors(
             new THREE.Color(CONFIG.mapColor),
-            new THREE.Color(0x224466),
+            new THREE.Color(0x4a7eb3),
             colorP
           )
         );
         eastMeshesRef.current.forEach((m) =>
           m.material.color.lerpColors(
             new THREE.Color(CONFIG.mapColor),
-            new THREE.Color(0x331111),
+            new THREE.Color(0x7d2b2b),
             colorP
           )
         );

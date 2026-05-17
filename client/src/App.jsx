@@ -66,29 +66,38 @@ import KahootHost from './kahoot/KahootHost';
 import { KahootHostProvider } from './kahoot/KahootHostContext';
 
 const interstitials = [
-  // First interstitial is the Lobby before the presentation starts
-  { 
-    atIndex: 0, 
+  // Lobby vóór de eerste slide
+  {
+    atIndex: 0,
     component: ({ onComplete }) => <KahootHost isLobby={true} onComplete={onComplete} />
   },
-  { 
-    atIndex: 6, 
-    component: ({ onComplete }) => <KahootHost questionId="q_navo" onComplete={onComplete} />
+  // Na slide 1
+  {
+    atIndex: 1,
+    component: ({ onComplete }) => <KahootHost questionId="q_cold_war_duration" onComplete={onComplete} />
   },
-  { 
-    atIndex: 12, 
-    component: ({ onComplete }) => <KahootHost questionId="q_berlin_wall" onComplete={onComplete} />
+  // Na slide 6: twee vragen achter elkaar
+  {
+    atIndex: 6,
+    component: ({ onComplete }) => (
+      <KahootHost questionIds={['q_nato_founded', 'q_ussr_soviet_same']} onComplete={onComplete} />
+    )
   },
-  { 
-    atIndex: 19, 
-    component: ({ onComplete }) => <KahootHost questionId="q_mi6" onComplete={onComplete} />
+  // Na slide 15
+  {
+    atIndex: 15,
+    component: ({ onComplete }) => <KahootHost questionId="q_stasi_translation" onComplete={onComplete} />
   },
-  { 
-    atIndex: 22, 
-    component: ({ onComplete }) => <KahootHost questionId="q_ussr_fall" onComplete={onComplete} />
+  // Na slide 17: waarom geen ‘hot’ oorlog + inlichtingendienst VK
+  {
+    atIndex: 17,
+    component: ({ onComplete }) => (
+      <KahootHost questionIds={['q_why_no_hot_war', 'q_mi6']} onComplete={onComplete} />
+    )
   },
-  { 
-    atIndex: 30, 
+  // Slotvraag voor einde presentatie
+  {
+    atIndex: 30,
     component: ({ onComplete }) => <KahootHost questionId="q_bonus" onComplete={onComplete} />
   }
 ];

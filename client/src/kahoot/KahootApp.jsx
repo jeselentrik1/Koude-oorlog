@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { SNTPClient } from './sntp';
 import { motion, AnimatePresence, animate } from 'framer-motion';
-import { User, Clock, CheckCircle2, XCircle, Trophy, Triangle, Diamond, Circle, Square } from 'lucide-react';
+import { User, Clock, CheckCircle2, XCircle, Trophy, Triangle, Diamond, Circle, Square, Zap } from 'lucide-react';
 import { useAssetCache } from '../components/AssetContext';
 import coldWarBg from '../assets/cold_war.jpeg';
 
@@ -77,8 +77,24 @@ export default function KahootApp({ navigate }) {
       }
     });
 
-    newSocket.on('quiz:started', ({ sid }) => {
-      setSid(sid);
+    newSocket.on('quiz:started', ({ sid: newSid }) => {
+      // If we were sitting on a previous quiz's final-result screen (or anywhere with a stale
+      // session), wipe the local state so the player can rejoin fresh under a new name.
+      setSid((prevSid) => {
+        if (prevSid && prevSid !== newSid) {
+          setName('');
+          setPlayerId('');
+          setScore(0);
+          setDisplayedScore(0);
+          setQuestion(null);
+          setQuestionResult(null);
+          setFinalResult(null);
+          setSelectedAnswer(null);
+          setGameState(STATES.JOIN);
+          localStorage.removeItem('kahoot_session');
+        }
+        return newSid;
+      });
     });
 
     newSocket.on('error', ({ message }) => {
@@ -110,6 +126,7 @@ export default function KahootApp({ navigate }) {
     newSocket.on('question:start', (q) => {
       setQuestion(q);
       setSelectedAnswer(null);
+      setQuestionResult(null);
       setGameState(STATES.COUNTDOWN);
     });
 
@@ -195,7 +212,7 @@ export default function KahootApp({ navigate }) {
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-0" />
       
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
           {error && (
             <motion.div 
               initial={{ opacity: 0, y: -50 }}
@@ -257,7 +274,7 @@ export default function KahootApp({ navigate }) {
 
           {gameState === STATES.COUNTDOWN && question && (
             <motion.div
-              key="countdown"
+              key={`countdown-${question.id}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -275,6 +292,11 @@ export default function KahootApp({ navigate }) {
               </div>
               
               <div className="relative">
+                {question.doublePoints && (
+                  <div className="mb-6 flex justify-center">
+                    <DoublePointsBadge size="md" />
+                  </div>
+                )}
                 <div className="h-48 flex items-center justify-center mb-8">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -361,7 +383,7 @@ export default function KahootApp({ navigate }) {
 
           {gameState === STATES.QUESTION && question && (
             <motion.div
-              key="question"
+              key={`question-${question.id}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -369,8 +391,8 @@ export default function KahootApp({ navigate }) {
             >
               <div className="text-center mb-12">
                 {question.doublePoints && (
-                  <div className="inline-block bg-red-700 text-white px-4 py-1 rounded font-black tracking-tighter uppercase text-sm mb-4 animate-pulse shadow-[0_0_15px_rgba(185,28,28,0.5)]">
-                    Dubbele Punten
+                  <div className="mb-5 flex justify-center">
+                    <DoublePointsBadge size="md" />
                   </div>
                 )}
                 <h2 className="text-3xl md:text-5xl font-black leading-tight drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] text-white uppercase tracking-tighter">
@@ -421,9 +443,9 @@ export default function KahootApp({ navigate }) {
             </motion.div>
           )}
 
-          {gameState === STATES.ANSWERED && (
+          {gameState === STATES.ANSWERED && question && (
             <motion.div
-              key="answered"
+              key={`answered-${question.id}`}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.1 }}
@@ -437,9 +459,9 @@ export default function KahootApp({ navigate }) {
             </motion.div>
           )}
 
-          {gameState === STATES.QUESTION_RESULT && questionResult && (
+          {gameState === STATES.QUESTION_RESULT && questionResult && question && (
             <motion.div
-              key="q-result"
+              key={`q-result-${question.id}`}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.1 }}
@@ -456,9 +478,15 @@ export default function KahootApp({ navigate }) {
                   <XCircle className="w-32 h-32 text-white mb-6 drop-shadow-lg" />
                 )}
                 
-                <div className="text-7xl font-black tracking-tighter mb-8 drop-shadow-lg text-white">
+                <div className="text-7xl font-black tracking-tighter mb-3 drop-shadow-lg text-white">
                   +{questionResult.pointsGained}
                 </div>
+
+                {question.doublePoints && (
+                  <div className="mb-6">
+                    <DoublePointsBadge size="sm" />
+                  </div>
+                )}
                 
                 <div className="w-full pt-4 mt-4 border-t border-white/10">
                   <div className="text-zinc-200/60 uppercase tracking-widest text-[10px] font-bold mb-1">Totaal</div>
@@ -509,5 +537,48 @@ export default function KahootApp({ navigate }) {
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+// ---------- Double-points indicator ----------
+// Same visual concept as the host's badge so players instantly recognise it when they look
+// up at the projector and back down at their phone. Gold gradient pill, halo + shimmer.
+function DoublePointsBadge({ size = 'md' }) {
+  const sizes = {
+    sm: { padding: 'px-3 py-1.5', text: 'text-[10px]', icon: 'w-3.5 h-3.5', gap: 'gap-1.5', tracking: 'tracking-[0.18em]' },
+    md: { padding: 'px-5 py-2.5', text: 'text-sm',     icon: 'w-4 h-4',     gap: 'gap-2',   tracking: 'tracking-[0.22em]' },
+    lg: { padding: 'px-7 py-3.5', text: 'text-lg',     icon: 'w-6 h-6',     gap: 'gap-3',   tracking: 'tracking-[0.25em]' },
+  };
+  const s = sizes[size] || sizes.md;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8, scale: 0.85 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+      className="relative inline-flex"
+    >
+      <motion.div
+        aria-hidden
+        className="absolute inset-0 rounded-full bg-amber-400/45 blur-2xl"
+        animate={{ opacity: [0.35, 0.85, 0.35], scale: [0.9, 1.15, 0.9] }}
+        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <div
+        className={`relative inline-flex items-center ${s.gap} ${s.padding} rounded-full bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 text-amber-950 font-black uppercase ${s.text} ${s.tracking} border-2 border-amber-100/80 shadow-[0_8px_30px_rgba(245,158,11,0.55)] overflow-hidden whitespace-nowrap`}
+      >
+        <motion.div
+          aria-hidden
+          className="absolute inset-y-0 -left-1/2 w-1/2 bg-gradient-to-r from-transparent via-white/70 to-transparent skew-x-12"
+          animate={{ left: ['-50%', '160%'] }}
+          transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <Zap className={`${s.icon} fill-amber-500 stroke-amber-900 drop-shadow-[0_0_6px_rgba(255,255,255,0.7)] relative`} strokeWidth={2.5} />
+        <span className="relative leading-none">
+          <span className="font-mono mr-1.5">&times;2</span>Dubbele Punten
+        </span>
+        <Zap className={`${s.icon} fill-amber-500 stroke-amber-900 drop-shadow-[0_0_6px_rgba(255,255,255,0.7)] relative`} strokeWidth={2.5} />
+      </div>
+    </motion.div>
   );
 }

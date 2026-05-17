@@ -66,6 +66,12 @@ h1, h2, h3 {
 .notes-render ul { list-style: disc; padding-left: 1.4rem; margin: 0.4rem 0; }
 .notes-render ol { list-style: decimal; padding-left: 1.4rem; margin: 0.4rem 0; }
 .notes-render li { margin: 0.15rem 0; }
+.notes-render [style*="color: black"],
+.notes-render [style*="color: rgb(0, 0, 0)"],
+.notes-render [style*="color:#000000"],
+.notes-render [style*="color:#000"] {
+  color: inherit !important;
+}
 .notes-render blockquote {
   border-left: 3px solid rgba(255,255,255,0.3);
   padding-left: 0.75rem;

@@ -95,7 +95,7 @@ app.get('/api/presenter/state', (_req, res) => {
 
   const sid = store.createSession()
   activeSessionSid = sid
-  const hostQuestions = quizConfig.questions.map(({ id, question, options, answer, timeLimit }) => ({ id, question, options, answer, timeLimit }))
+  const hostQuestions = quizConfig.questions.map(({ id, question, options, answer, timeLimit, isFinal, doublePoints }) => ({ id, question, options, answer, timeLimit, isFinal: !!isFinal, doublePoints: !!doublePoints }))
   res.json({ sid, questions: hostQuestions })
 })
 
@@ -173,7 +173,7 @@ io.on('connection', (socket) => {
     console.log(`Host joined session ${sid}`)
     
     // Send questions to the host (including options and answer for host display)
-    const hostQuestions = quizConfig.questions.map(({ id, question, options, answer, timeLimit }) => ({ id, question, options, answer, timeLimit }))
+    const hostQuestions = quizConfig.questions.map(({ id, question, options, answer, timeLimit, isFinal, doublePoints }) => ({ id, question, options, answer, timeLimit, isFinal: !!isFinal, doublePoints: !!doublePoints }))
     socket.emit('host:questions', hostQuestions)
 
     // Notify all connected clients that a quiz is starting
@@ -257,15 +257,26 @@ io.on('connection', (socket) => {
     socket.join(`host:${sid}`)
     
     // Send questions to the host (including options and answer for host display)
-    const hostQuestions = quizConfig.questions.map(({ id, question, options, answer, timeLimit }) => ({ id, question, options, answer, timeLimit }))
+    const hostQuestions = quizConfig.questions.map(({ id, question, options, answer, timeLimit, isFinal, doublePoints }) => ({ id, question, options, answer, timeLimit, isFinal: !!isFinal, doublePoints: !!doublePoints }))
     
-    // Determine current state for host
+    // Determine current state for host, and include the actually-active shuffled question
+    // (so the host renders options in the same order players see them after a reconnect).
     let currentState = 'LOBBY'
     let currentQuestionIndex = -1
+    let activeQuestion = null
     if (session.currentQuestion) {
       const isCountdown = performance.now() < session.questionStartTime
       currentState = isCountdown ? 'COUNTDOWN' : 'QUESTION'
       currentQuestionIndex = quizConfig.questions.findIndex(q => q.id === session.currentQuestion.id)
+      activeQuestion = {
+        id: session.currentQuestion.id,
+        question: session.currentQuestion.question,
+        options: session.currentQuestion.options,
+        answer: session.currentQuestion.answer,
+        timeLimit: session.currentQuestion.timeLimit,
+        isFinal: !!session.currentQuestion.isFinal,
+        doublePoints: !!session.currentQuestion.doublePoints,
+      }
     }
 
     socket.emit('host:reconnected', { 
@@ -273,6 +284,7 @@ io.on('connection', (socket) => {
       questions: hostQuestions,
       currentState,
       currentQuestionIndex,
+      activeQuestion,
       startTime: session.questionStartTime,
       playerCount: {
         count: session.answersCount,
@@ -311,10 +323,17 @@ io.on('connection', (socket) => {
     session.questionStartTime = performance.now() + DELAY
     session.questionEndTime = session.questionStartTime + (question.timeLimit * 1000)
 
-    // Broadcast question to players and host
+    // Broadcast question to players (without answer) and host (with answer + isFinal flag).
+    // CRITICAL: both sides receive the *same* shuffled `options` array so colors/order match 1:1.
     const { answer, ...clientQuestion } = shuffledQuestion
     io.to(`players:${sid}`).emit('question:start', { ...clientQuestion, startTime: session.questionStartTime })
-    io.to(`host:${sid}`).emit('host:question-start', { ...clientQuestion, startTime: session.questionStartTime })
+    io.to(`host:${sid}`).emit('host:question-start', {
+      ...clientQuestion,
+      answer,
+      isFinal: !!shuffledQuestion.isFinal,
+      doublePoints: !!shuffledQuestion.doublePoints,
+      startTime: session.questionStartTime
+    })
 
     // Set timer to end question automatically
     session.questionTimeout = setTimeout(() => {

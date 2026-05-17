@@ -63,7 +63,7 @@ export default function Slide21() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="mb-4 text-sm font-bold uppercase tracking-[0.4em] text-blue-500"
+              className="mb-4 text-sm font-bold uppercase tracking-[0.4em] text-red-600"
             >
               Een erfenis van spionnen
             </motion.div>
@@ -90,7 +90,7 @@ export default function Slide21() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.8 }}
-                className="border-l-2 border-blue-500/40 pl-6 font-medium italic text-white"
+                className="border-l-2 border-red-600/40 pl-6 font-medium italic text-white"
               >
                 Manipulatie en kille opofferingen.
               </motion.p>

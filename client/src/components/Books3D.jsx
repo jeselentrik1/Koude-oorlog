@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAssetCache } from './AssetContext';
 
 const CONFIG = {
-  ambientIntensity: 0.08 * Math.PI,
-  keyIntensity: 5.2 * Math.PI,
+  ambientIntensity: 0.01 * Math.PI,
+  keyIntensity: 0.625 * Math.PI,
   focusKeyIntensity: 7.8 * Math.PI,
   bookScale: 3.5,
 };
@@ -198,13 +198,17 @@ export default function Books3D({ phase = 0 }) {
       if (ph === 0) {
         keyLight.intensity = THREE.MathUtils.lerp(keyLight.intensity, CONFIG.keyIntensity, 0.05);
         keyLight.position.lerp(new THREE.Vector3(0, 12, 10), 0.05);
-        fillLight.intensity = THREE.MathUtils.lerp(fillLight.intensity, 1.0 * Math.PI, 0.05);
+        fillLight.intensity = THREE.MathUtils.lerp(fillLight.intensity, 0.1 * Math.PI, 0.05);
         ambientLight.intensity = THREE.MathUtils.lerp(ambientLight.intensity, CONFIG.ambientIntensity, 0.05);
+        rimLight.intensity = THREE.MathUtils.lerp(rimLight.intensity, 0.1 * Math.PI, 0.05);
+        bounceLight.intensity = THREE.MathUtils.lerp(bounceLight.intensity, 0.05 * Math.PI, 0.05);
       } else {
         keyLight.intensity = THREE.MathUtils.lerp(keyLight.intensity, CONFIG.focusKeyIntensity, 0.05);
         keyLight.position.lerp(new THREE.Vector3(6, 10, 8), 0.05);
         fillLight.intensity = THREE.MathUtils.lerp(fillLight.intensity, 0.5 * Math.PI, 0.05);
         ambientLight.intensity = THREE.MathUtils.lerp(ambientLight.intensity, 0.035 * Math.PI, 0.05);
+        rimLight.intensity = THREE.MathUtils.lerp(rimLight.intensity, 0.9 * Math.PI, 0.05);
+        bounceLight.intensity = THREE.MathUtils.lerp(bounceLight.intensity, 0.5 * Math.PI, 0.05);
       }
 
       bookGroups.forEach((group, i) => {

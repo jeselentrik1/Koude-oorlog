@@ -1,49 +1,88 @@
 {
   "questions": [
     {
-      "id": "q_navo",
-      "question": "Waarvoor staat de afkorting NAVO?",
+      "id": "q_cold_war_duration",
+      "question": "Hoe lang duurde de Koude Oorlog ongeveer?",
       "type": "multiple-choice",
-      "options": ["Noord-Atlantische Verdragsorganisatie", "Noord-Atlantische Veiligheids-Organisatie", "Nationaal Ambtelijk Verbond voor Ontwikkeling", "Neutraal Alliantie-Verbond voor Opvang"],
-      "answer": "Noord-Atlantische Verdragsorganisatie",
+      "options": [
+        "Ongeveer 25 jaar",
+        "Ongeveer 35 jaar",
+        "Ongeveer 45 jaar",
+        "Meer dan 50 jaar"
+      ],
+      "answer": "Ongeveer 45 jaar",
       "timeLimit": 20,
       "doublePoints": false
     },
     {
-      "id": "q_berlin_wall",
-      "question": "Hoe lang was de Berlijnse Muur in totaal?",
+      "id": "q_nato_founded",
+      "question": "In welk jaar werd de NAVO opgericht?",
       "type": "multiple-choice",
-      "options": ["155km", "135km", "165km", "180km"],
-      "answer": "155km",
+      "options": ["1949", "1945", "1955", "1961"],
+      "answer": "1949",
+      "timeLimit": 20,
+      "doublePoints": false
+    },
+    {
+      "id": "q_ussr_soviet_same",
+      "question": "Zijn USSR en Sovjet-Unie hetzelfde?",
+      "type": "multiple-choice",
+      "options": [
+        "Ja, het zijn verschillende namen voor dezelfde staat",
+        "Nee, het waren twee verschillende landen",
+        "Alleen tijdens de Tweede Wereldoorlog",
+        "Nee, USSR was vooral een militaire alliantie"
+      ],
+      "answer": "Ja, het zijn verschillende namen voor dezelfde staat",
+      "timeLimit": 20,
+      "doublePoints": false
+    },
+    {
+      "id": "q_stasi_translation",
+      "question": "Waar staat het Duitse 'Ministerium für Staatssicherheit' voor?",
+      "type": "multiple-choice",
+      "options": [
+        "Ministerie voor Staatsveiligheid",
+        "Ministerie voor Staatsgeheimhouding",
+        "Ministerie voor Staatszekerheid",
+        "Ministerie voor Staatsbescherming"
+      ],
+      "answer": "Ministerie voor Staatsveiligheid",
+      "timeLimit": 20,
+      "doublePoints": false
+    },
+    {
+      "id": "q_why_no_hot_war",
+      "question": "Waarom werd de Koude Oorlog vrijwel niet als een ‘hot’ oorlog tussen supermachten uitgevochten?",
+      "type": "multiple-choice",
+      "options": [
+        "Vooral uit angst voor totale vernietiging",
+        "Vanwege een geheim niet-aanvalsverdrag uit 1945",
+        "Omdat de economische handel tussen de VS en USSR te belangrijk was",
+        "Omdat de Verenigde Naties elke vorm van geweld direct blokkeerden"
+      ],
+      "answer": "Vooral uit angst voor totale vernietiging",
       "timeLimit": 20,
       "doublePoints": false
     },
     {
       "id": "q_mi6",
-      "question": "Wie is de inlichtingendienst van het Verenigd Koninkrijk?",
+      "question": "Welke organisatie is de buitenlandse inlichtingendienst van het Verenigd Koninkrijk?",
       "type": "multiple-choice",
       "options": ["MI6", "CIA", "FBI", "KGB"],
       "answer": "MI6",
-      "timeLimit": 15,
-      "doublePoints": false
-    },
-    {
-      "id": "q_ussr_fall",
-      "question": "In welk jaar werd de Sovjet-Unie (USSR) officieel ontbonden?",
-      "type": "multiple-choice",
-      "options": ["1991", "1989", "1990", "1992"],
-      "answer": "1991",
       "timeLimit": 20,
       "doublePoints": false
     },
     {
       "id": "q_bonus",
-      "question": "Hoe heette de politiek van 'openheid' die Gorbatsjov introduceerde in de jaren 80?",
+      "question": "Hoe heette de politiek van ‘openheid’ die Gorbatsjov in de jaren 80 introduceerde?",
       "type": "multiple-choice",
-      "options": ["Glasnost", "Perestrojka", "Demokratizatsiya", "Uskoreniye"],
+      "options": ["Glasnost", "Perestrojka", "Demokratisatsiya", "Uskorenije"],
       "answer": "Glasnost",
       "timeLimit": 25,
-      "doublePoints": true
+      "doublePoints": true,
+      "isFinal": true
     }
   ]
 }
