@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { SNTPClient } from './sntp';
 import { motion, AnimatePresence, animate } from 'framer-motion';
-import { User, Clock, CheckCircle2, XCircle, Trophy, Triangle, Diamond, Circle, Square, Zap } from 'lucide-react';
+import { User, CheckCircle2, XCircle, Trophy, Triangle, Diamond, Circle, Square, Zap } from 'lucide-react';
 import { useAssetCache } from '../components/AssetContext';
 import coldWarBg from '../assets/cold_war.jpeg';
 
@@ -17,6 +17,14 @@ const STATES = {
   QUESTION_RESULT: 'QUESTION_RESULT',
   FINAL_RESULT: 'FINAL_RESULT'
 };
+
+const OPTION_SHAPES = [Triangle, Diamond, Circle, Square];
+const OPTION_COLORS = [
+  'bg-red-800 active:bg-red-700 border-red-600 text-white',
+  'bg-blue-900 active:bg-blue-800 border-blue-700 text-white',
+  'bg-amber-700 active:bg-amber-600 border-amber-500 text-white',
+  'bg-emerald-900 active:bg-emerald-800 border-emerald-700 text-white',
+];
 
 export default function KahootApp({ navigate }) {
   const { getAssetUrl } = useAssetCache();
@@ -204,21 +212,31 @@ export default function KahootApp({ navigate }) {
     });
   };
 
+  const isRoundActive =
+    question &&
+    (gameState === STATES.COUNTDOWN || gameState === STATES.QUESTION);
+
   return (
-    <div 
-      className="min-h-screen bg-cover bg-center relative text-white font-sans overflow-hidden"
+    <div
+      className="h-[100dvh] max-h-[100dvh] bg-cover bg-center relative text-white font-sans overflow-hidden overscroll-none touch-manipulation"
       style={{ backgroundImage: `url(${getAssetUrl(coldWarBg)})` }}
     >
       <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-0" />
       
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
-        <AnimatePresence mode="sync">
+      <div
+        className={`relative z-10 flex flex-col w-full mx-auto min-h-0 ${
+          isRoundActive
+            ? 'h-full max-w-lg px-3 sm:px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))]'
+            : 'min-h-[100dvh] items-center justify-center p-4 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]'
+        }`}
+      >
+        <AnimatePresence mode="wait">
           {error && (
             <motion.div 
               initial={{ opacity: 0, y: -50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -50 }}
-              className="absolute top-8 bg-red-900/90 text-red-100 px-6 py-3 rounded border border-red-500/50 shadow-2xl flex items-center gap-2"
+              className="fixed left-1/2 -translate-x-1/2 top-[max(1rem,env(safe-area-inset-top))] z-50 max-w-[calc(100%-2rem)] bg-red-900/90 text-red-100 px-4 sm:px-6 py-3 rounded border border-red-500/50 shadow-2xl flex items-center gap-2"
             >
               <XCircle className="w-5 h-5" />
               <span className="font-medium tracking-wide uppercase">{error}</span>
@@ -231,10 +249,10 @@ export default function KahootApp({ navigate }) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-zinc-900/80 p-8 rounded-xl border border-zinc-700/50 shadow-2xl backdrop-blur-lg"
+              className="w-full max-w-md bg-zinc-900/80 p-6 sm:p-8 rounded-xl border border-zinc-700/50 shadow-2xl backdrop-blur-lg"
             >
-              <div className="text-center mb-8">
-                <h1 className="text-4xl font-black text-white tracking-tighter uppercase mb-2 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">Koude Oorlog Quiz</h1>
+              <div className="text-center mb-6 sm:mb-8">
+                <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-2 drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">Koude Oorlog Quiz</h1>
                 <div className="h-1 w-16 bg-red-700 mx-auto mb-6 shadow-lg" />
                 <p className="text-slate-400 font-bold text-sm tracking-wide uppercase">
                   {!sid ? "Wachten tot de quiz begint..." : "Vul je naam in om mee te doen"}
@@ -251,7 +269,7 @@ export default function KahootApp({ navigate }) {
                         placeholder="NAAM" 
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full bg-zinc-950/50 border-2 border-white/10 rounded px-10 py-4 text-center font-bold text-xl tracking-wide uppercase focus:outline-none focus:border-red-700 focus:bg-black/80 transition-all"
+                        className="w-full bg-zinc-950/50 border-2 border-white/10 rounded px-10 py-3 sm:py-4 text-center font-bold text-lg sm:text-xl tracking-wide uppercase focus:outline-none focus:border-red-700 focus:bg-black/80 transition-all"
                         required
                         maxLength={15}
                       />
@@ -259,7 +277,7 @@ export default function KahootApp({ navigate }) {
                   </div>
                   <button 
                     type="submit"
-                    className="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-4 rounded text-xl uppercase tracking-widest transition-colors border border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+                    className="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-3 sm:py-4 rounded text-lg sm:text-xl uppercase tracking-widest transition-colors border border-red-500/50 shadow-[0_0_15px_rgba(220,38,38,0.5)]"
                   >
                     Meedoen
                   </button>
@@ -272,87 +290,136 @@ export default function KahootApp({ navigate }) {
             </motion.div>
           )}
 
-          {gameState === STATES.COUNTDOWN && question && (
+          {isRoundActive && (
             <motion.div
-              key={`countdown-${question.id}`}
+              key={`round-${question.id}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center relative"
+              className="flex flex-col flex-1 min-h-0 w-full"
             >
-              <div className="absolute inset-0 flex items-center justify-center -z-10">
-                <motion.div 
-                  animate={{ 
-                    scale: [1, 1.5, 1],
-                    opacity: [0.1, 0.3, 0.1]
-                  }}
-                  transition={{ repeat: Infinity, duration: 1 }}
-                  className="w-96 h-96 rounded-full border-[20px] border-red-900/20"
-                />
-              </div>
-              
-              <div className="relative">
-                {question.doublePoints && (
-                  <div className="mb-6 flex justify-center">
-                    <DoublePointsBadge size="md" />
+              {gameState === STATES.COUNTDOWN ? (
+                <motion.div className="flex flex-col flex-1 min-h-0">
+                  <div className="shrink-0 flex justify-center pt-2 sm:pt-4">
+                    {question.doublePoints && <DoublePointsBadge size="md" />}
                   </div>
-                )}
-                <div className="h-48 flex items-center justify-center mb-8">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={Math.ceil(Math.max(0, question.startTime - (sntp?.now() || 0)) / 1000)}
-                      initial={{ scale: 0.5, opacity: 0, rotate: -20, filter: "blur(10px)" }}
-                      animate={{ scale: 1, opacity: 1, rotate: 0, filter: "blur(0px)" }}
-                      exit={{ scale: 1.5, opacity: 0, rotate: 20, filter: "blur(20px)" }}
-                      transition={{ 
-                        type: "spring",
-                        stiffness: 400,
-                        damping: 25
-                      }}
-                      className="text-[12rem] font-black text-red-700 drop-shadow-[0_0_50px_rgba(185,28,28,0.8)] font-mono leading-none"
-                    >
-                      {Math.ceil(Math.max(0, question.startTime - (sntp?.now() || 0)) / 1000)}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-                
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 text-zinc-500 uppercase tracking-[0.5em] font-black text-xl"
-                >
-                  Maak je klaar
+                  <div className="flex-1 flex flex-col items-center justify-center relative min-h-0 text-center">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10">
+                      <motion.div
+                        animate={{
+                          scale: [1, 1.4, 1],
+                          opacity: [0.08, 0.25, 0.08],
+                        }}
+                        transition={{ repeat: Infinity, duration: 1 }}
+                        className="w-48 h-48 sm:w-72 sm:h-72 rounded-full border-[12px] sm:border-[20px] border-red-900/20"
+                      />
+                    </div>
+                    <div className="h-28 sm:h-40 flex items-center justify-center">
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={Math.ceil(Math.max(0, question.startTime - (sntp?.now() || 0)) / 1000)}
+                          initial={{ scale: 0.6, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 1.3, opacity: 0 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                          className="text-[5.5rem] sm:text-[8rem] md:text-[10rem] font-black text-red-700 drop-shadow-[0_0_50px_rgba(185,28,28,0.8)] font-mono leading-none tabular-nums"
+                        >
+                          {Math.ceil(Math.max(0, question.startTime - (sntp?.now() || 0)) / 1000)}
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                    <p className="mt-4 sm:mt-6 text-zinc-500 uppercase tracking-[0.35em] sm:tracking-[0.5em] font-black text-sm sm:text-xl">
+                      Maak je klaar
+                    </p>
+                    <div className="mt-6 sm:mt-8 flex items-center justify-center gap-3 sm:gap-4">
+                      <div className="h-[2px] w-8 sm:w-12 bg-red-900/50" />
+                      <div className="text-red-900 text-sm sm:text-base">★</div>
+                      <div className="h-[2px] w-8 sm:w-12 bg-red-900/50" />
+                    </div>
+                  </div>
+                  <div
+                    className="shrink-0 grid grid-cols-1 gap-2 sm:gap-3 min-h-[min(46dvh,22rem)] sm:min-h-[min(40dvh,20rem)] opacity-0 pointer-events-none"
+                    aria-hidden
+                  >
+                    {question.options.map((_, idx) => (
+                      <div key={idx} className="min-h-[3.25rem] sm:min-h-[3.75rem] rounded-xl" />
+                    ))}
+                  </div>
                 </motion.div>
-                
-                {/* Soviet-style star decoration */}
-                <div className="mt-8 flex items-center justify-center gap-4">
-                  <div className="h-[2px] w-12 bg-red-900/50" />
-                  <div className="text-red-900">★</div>
-                  <div className="h-[2px] w-12 bg-red-900/50" />
-                </div>
-              </div>
+              ) : (
+                <>
+                  <header className="shrink-0 text-center mb-4 sm:mb-6">
+                    {question.doublePoints && (
+                      <div className="mb-3 sm:mb-4 flex justify-center px-1">
+                        <DoublePointsBadge size="md" />
+                      </div>
+                    )}
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-black leading-snug drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] text-white uppercase tracking-tighter px-1">
+                      {question.question}
+                    </h2>
+                  </header>
+
+                  <div className="shrink-0 w-full mb-3 sm:mb-4">
+                    <div className="flex items-center justify-between font-bold text-slate-400 mb-1.5 tracking-wide uppercase text-[10px] sm:text-xs">
+                      <span>Resterende Tijd</span>
+                      <span className="font-black text-red-600 tabular-nums">{(timeLeft / 1000).toFixed(1)}s</span>
+                    </div>
+                    <div className="h-1.5 sm:h-2 bg-white/5 rounded-full overflow-hidden border border-white/10">
+                      <motion.div
+                        className="h-full bg-red-700 shadow-[0_0_10px_rgba(185,28,28,0.5)]"
+                        initial={{ width: '100%' }}
+                        animate={{ width: `${(timeLeft / (question.timeLimit * 1000)) * 100}%` }}
+                        transition={{ ease: 'linear', duration: 0.1 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-h-[min(46dvh,22rem)] sm:min-h-[min(40dvh,20rem)] grid grid-cols-1 gap-2 sm:gap-3 grid-rows-4 auto-rows-fr">
+                    {question.options.map((opt, idx) => {
+                      const ShapeIcon = OPTION_SHAPES[idx % 4];
+                      const isSelected = selectedAnswer === opt;
+                      return (
+                        <motion.button
+                          key={idx}
+                          type="button"
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => handleAnswer(opt)}
+                          className={`relative min-h-[3.25rem] sm:min-h-[3.75rem] px-3 sm:px-5 py-3 rounded-xl border-2 ${OPTION_COLORS[idx % 4]} text-sm sm:text-lg font-bold shadow-xl overflow-hidden flex items-center gap-2 sm:gap-3 ${
+                            isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-black/50' : ''
+                          }`}
+                        >
+                          <ShapeIcon className="w-7 h-7 sm:w-9 sm:h-9 opacity-90 shrink-0" fill="currentColor" />
+                          <span className="relative z-10 flex-1 text-left sm:text-center uppercase tracking-tight font-black leading-tight line-clamp-3">
+                            {opt}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
 
           {gameState === STATES.LOBBY && (
             <motion.div
               key="lobby"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="text-center w-full max-w-sm"
             >
-              <div className="bg-zinc-900/40 backdrop-blur-xl rounded-3xl p-8 border border-white/5 shadow-2xl relative overflow-hidden">
+              <div className="bg-zinc-900/40 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/5 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-red-600/50" />
                 
                 <div className="mb-8">
                   <div className="text-zinc-500 uppercase tracking-[0.2em] text-[10px] font-black mb-1">Speler</div>
-                  <h2 className="text-3xl font-black tracking-tight text-white uppercase">{name}</h2>
+                  <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase">{name}</h2>
                 </div>
 
-                <div className="mb-12">
+                <div className="mb-8 sm:mb-12">
                   <div className="text-zinc-500 uppercase tracking-[0.2em] text-[10px] font-black mb-1">Totaal Score</div>
-                  <div className="text-6xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                  <div className="text-5xl sm:text-6xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
                     {score}
                   </div>
                 </div>
@@ -381,79 +448,17 @@ export default function KahootApp({ navigate }) {
             </motion.div>
           )}
 
-          {gameState === STATES.QUESTION && question && (
-            <motion.div
-              key={`question-${question.id}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="w-full max-w-4xl flex flex-col items-center"
-            >
-              <div className="text-center mb-12">
-                {question.doublePoints && (
-                  <div className="mb-5 flex justify-center">
-                    <DoublePointsBadge size="md" />
-                  </div>
-                )}
-                <h2 className="text-3xl md:text-5xl font-black leading-tight drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)] text-white uppercase tracking-tighter">
-                  {question.question}
-                </h2>
-              </div>
-              
-              <div className="w-full max-w-sm mb-12">
-                <div className="flex items-center justify-between font-bold text-slate-400 mb-2 tracking-wide uppercase text-sm">
-                  <span>Resterende Tijd</span>
-                  <span className="font-black text-red-600">{(timeLeft / 1000).toFixed(1)}s</span>
-                </div>
-                <div className="h-2 bg-white/5 rounded-full overflow-hidden border border-white/10">
-                  <motion.div 
-                    className="h-full bg-red-700 shadow-[0_0_10px_rgba(185,28,28,0.5)]"
-                    initial={{ width: "100%" }}
-                    animate={{ width: `${(timeLeft / (question.timeLimit * 1000)) * 100}%` }}
-                    transition={{ ease: "linear", duration: 0.1 }}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                {question.options.map((opt, idx) => {
-                  const shapes = [Triangle, Diamond, Circle, Square];
-                  const ShapeIcon = shapes[idx % 4];
-                  const colors = [
-                    'bg-red-800 hover:bg-red-700 border-red-600 text-white',
-                    'bg-blue-900 hover:bg-blue-800 border-blue-700 text-white',
-                    'bg-amber-700 hover:bg-amber-600 border-amber-500 text-white',
-                    'bg-emerald-900 hover:bg-emerald-800 border-emerald-700 text-white'
-                  ];
-                  return (
-                    <motion.button
-                      key={idx}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleAnswer(opt)}
-                      className={`relative p-8 rounded-xl border-2 ${colors[idx % 4]} text-xl md:text-2xl font-bold shadow-xl overflow-hidden group transition-colors flex items-center`}
-                    >
-                      <ShapeIcon className="w-10 h-10 opacity-80 shrink-0" fill="currentColor" />
-                      <span className="relative z-10 drop-shadow-md text-center flex-1 uppercase tracking-tighter font-black">{opt}</span>
-                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity z-0 pointer-events-none" />
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-
           {gameState === STATES.ANSWERED && question && (
             <motion.div
               key={`answered-${question.id}`}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.1 }}
-              className="text-center"
+              className="text-center w-full max-w-sm"
             >
-              <div className="bg-zinc-900/80 p-12 rounded-2xl border border-zinc-700/50 backdrop-blur-md">
-                <CheckCircle2 className="w-24 h-24 text-zinc-500 mx-auto mb-6" />
-                <h2 className="text-3xl font-black tracking-tighter uppercase mb-2 text-zinc-300">Antwoord Ontvangen</h2>
+              <div className="bg-zinc-900/80 p-6 sm:p-10 rounded-2xl border border-zinc-700/50 backdrop-blur-md">
+                <CheckCircle2 className="w-16 h-16 sm:w-24 sm:h-24 text-zinc-500 mx-auto mb-4 sm:mb-6" />
+                <h2 className="text-xl sm:text-3xl font-black tracking-tighter uppercase mb-2 text-zinc-300">Antwoord Ontvangen</h2>
                 <p className="text-slate-500 font-bold tracking-wide uppercase">Wachten op andere spelers...</p>
               </div>
             </motion.div>
@@ -467,18 +472,18 @@ export default function KahootApp({ navigate }) {
               exit={{ opacity: 0, scale: 1.1 }}
               className="w-full max-w-md"
             >
-              <div className={`p-12 rounded-3xl text-center backdrop-blur-xl shadow-2xl flex flex-col items-center border-t border-white/20 ${
+              <div className={`p-6 sm:p-10 rounded-3xl text-center backdrop-blur-xl shadow-2xl flex flex-col items-center border-t border-white/20 ${
                 questionResult.isCorrect 
                   ? 'bg-emerald-600/90 shadow-[0_0_50px_rgba(16,185,129,0.4)]' 
                   : 'bg-red-600/90 shadow-[0_0_50px_rgba(220,38,38,0.4)]'
               }`}>
                 {questionResult.isCorrect ? (
-                  <CheckCircle2 className="w-32 h-32 text-white mb-6 drop-shadow-lg" />
+                  <CheckCircle2 className="w-20 h-20 sm:w-32 sm:h-32 text-white mb-4 sm:mb-6 drop-shadow-lg" />
                 ) : (
-                  <XCircle className="w-32 h-32 text-white mb-6 drop-shadow-lg" />
+                  <XCircle className="w-20 h-20 sm:w-32 sm:h-32 text-white mb-4 sm:mb-6 drop-shadow-lg" />
                 )}
                 
-                <div className="text-7xl font-black tracking-tighter mb-3 drop-shadow-lg text-white">
+                <div className="text-5xl sm:text-7xl font-black tracking-tighter mb-3 drop-shadow-lg text-white">
                   +{questionResult.pointsGained}
                 </div>
 
@@ -495,9 +500,9 @@ export default function KahootApp({ navigate }) {
                   </div>
                 </div>
 
-                <div className="mt-12 text-white/80">
+                <div className="mt-8 sm:mt-12 text-white/80">
                   <div className="text-3xl font-black tracking-tighter opacity-40 uppercase text-xs tracking-widest mb-1">Positie</div>
-                  <div className="text-5xl font-black tracking-tighter">
+                  <div className="text-4xl sm:text-5xl font-black tracking-tighter">
                     #{questionResult.rank}
                   </div>
                 </div>
@@ -508,18 +513,18 @@ export default function KahootApp({ navigate }) {
           {gameState === STATES.FINAL_RESULT && finalResult && (
             <motion.div
               key="final-result"
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               className="text-center w-full max-w-md"
             >
-              <div className="bg-zinc-900/90 p-10 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-lg">
-                <Trophy className="w-24 h-24 text-amber-500 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
-                <h1 className="text-4xl font-black uppercase tracking-tighter mb-2 text-white">Quiz Voltooid</h1>
+              <div className="bg-zinc-900/90 p-6 sm:p-10 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-lg">
+                <Trophy className="w-16 h-16 sm:w-24 sm:h-24 text-amber-500 mx-auto mb-4 sm:mb-6 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
+                <h1 className="text-2xl sm:text-4xl font-black uppercase tracking-tighter mb-2 text-white">Quiz Voltooid</h1>
                 <p className="text-slate-400 font-bold tracking-wide uppercase mb-8">Bekijk het scherm voor de einduitslag</p>
                 
                 <div className="bg-black/60 rounded-xl p-6 mb-6 border border-white/5">
                   <p className="text-xs text-slate-500 uppercase tracking-wide font-bold mb-1">Eindklassement</p>
-                  <div className="text-6xl font-black tracking-tighter text-white">
+                  <div className="text-5xl sm:text-6xl font-black tracking-tighter text-white">
                     #{finalResult.rank}
                   </div>
                   <p className="text-slate-500 mt-2 font-bold uppercase text-xs tracking-wide">van de {finalResult.totalPlayers} spelers</p>
@@ -553,10 +558,10 @@ function DoublePointsBadge({ size = 'md' }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -8, scale: 0.85 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-      className="relative inline-flex"
+      className="relative inline-flex max-w-full"
     >
       <motion.div
         aria-hidden
@@ -565,7 +570,7 @@ function DoublePointsBadge({ size = 'md' }) {
         transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
       />
       <div
-        className={`relative inline-flex items-center ${s.gap} ${s.padding} rounded-full bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 text-amber-950 font-black uppercase ${s.text} ${s.tracking} border-2 border-amber-100/80 shadow-[0_8px_30px_rgba(245,158,11,0.55)] overflow-hidden whitespace-nowrap`}
+        className={`relative inline-flex items-center ${s.gap} ${s.padding} rounded-full bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 text-amber-950 font-black uppercase ${s.text} ${s.tracking} border-2 border-amber-100/80 shadow-[0_8px_30px_rgba(245,158,11,0.55)] overflow-hidden max-w-full`}
       >
         <motion.div
           aria-hidden
