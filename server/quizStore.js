@@ -40,22 +40,28 @@ export class QuizStore {
     const session = this.sessions.get(sid);
     if (!session) return null;
     
-    if (session.playerNames.has(name)) {
-      return { error: 'Name already taken' };
+    const trimmedName = typeof name === 'string' ? name.trim() : '';
+    if (!trimmedName) {
+      return { error: 'Naam mag niet leeg zijn' };
+    }
+
+    const lowerName = trimmedName.toLowerCase();
+    if (session.playerNames.has(lowerName)) {
+      return { error: 'Naam al in gebruik' };
     }
 
     const playerId = uuidv4();
     const player = {
       playerId,
       socketId,
-      name,
+      name: trimmedName,
       score: 0,
       answers: {} // questionId -> { correct, points, timeTaken }
     };
 
     session.players.set(playerId, player);
     session.socketToPlayer.set(socketId, playerId);
-    session.playerNames.set(name, playerId);
+    session.playerNames.set(lowerName, playerId);
     return player;
   }
 

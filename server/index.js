@@ -176,6 +176,11 @@ io.on('connection', (socket) => {
     const hostQuestions = quizConfig.questions.map(({ id, question, options, answer, timeLimit, isFinal, doublePoints }) => ({ id, question, options, answer, timeLimit, isFinal: !!isFinal, doublePoints: !!doublePoints }))
     socket.emit('host:questions', hostQuestions)
 
+    // Notify host of the current player count
+    socket.emit('host:player-joined', { 
+      count: session.players.size 
+    })
+
     // Notify all connected clients that a quiz is starting
     io.emit('quiz:started', { sid })
   })
@@ -195,7 +200,7 @@ io.on('connection', (socket) => {
     }
 
     socket.join(`players:${sid}`)
-    socket.emit('player:registered', { name, sid, playerId: registration.playerId })
+    socket.emit('player:registered', { name: registration.name, sid, playerId: registration.playerId })
     
     // If a question is active and not idle, send it to the late joiner
     if (session.currentQuestion && !session.isIdle) {
@@ -208,7 +213,7 @@ io.on('connection', (socket) => {
       count: session.players.size 
     })
     
-    console.log(`Player ${name} joined session ${sid}`)
+    console.log(`Player ${registration.name} joined session ${sid}`)
   })
 
   socket.on('player:reconnect', ({ sid, playerId }) => {

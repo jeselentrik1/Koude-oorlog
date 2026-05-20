@@ -64,6 +64,7 @@ const slideMetadata = {
 // Interactive sections to insert between slides
 import KahootHost from './kahoot/KahootHost';
 import { KahootHostProvider } from './kahoot/KahootHostContext';
+import { SocketProvider } from './components/SocketContext';
 
 const interstitials = [
   // Lobby vóór de eerste slide
@@ -134,23 +135,27 @@ function App() {
     content = <PresenterView slidesMeta={slidesMeta} />;
   } else if (currentPath === '/present') {
     content = (
-      <KahootHostProvider>
-        <Presentation 
-          slides={slides} 
-          slideMetadata={slideMetadata}
-          interstitials={interstitials}
-          navigate={(path) => {
-            window.history.pushState({}, '', path);
-            setCurrentPath(path);
-          }} 
-        />
-      </KahootHostProvider>
+      <SocketProvider>
+        <KahootHostProvider>
+          <Presentation 
+            slides={slides} 
+            slideMetadata={slideMetadata}
+            interstitials={interstitials}
+            navigate={(path) => {
+              window.history.pushState({}, '', path);
+              setCurrentPath(path);
+            }} 
+          />
+        </KahootHostProvider>
+      </SocketProvider>
     );
   } else if (currentPath === '/host-test') {
     content = (
-      <KahootHostProvider>
-        <KahootHostTest />
-      </KahootHostProvider>
+      <SocketProvider>
+        <KahootHostProvider>
+          <KahootHostTest />
+        </KahootHostProvider>
+      </SocketProvider>
     );
   } else {
     content = (

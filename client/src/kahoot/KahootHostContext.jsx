@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { useSocket } from '../components/SocketContext';
 import { SNTPClient } from './sntp';
-
-const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 const KahootHostContext = createContext(null);
 
@@ -18,7 +16,7 @@ export const STATES = {
 };
 
 export function KahootHostProvider({ children }) {
-  const [socket, setSocket] = useState(null);
+  const { socket } = useSocket();
   const [sntp, setSntp] = useState(null);
   const [gameState, setGameState] = useState(STATES.START);
   const [sid, setSid] = useState('');
@@ -32,22 +30,21 @@ export function KahootHostProvider({ children }) {
   const [currentQuestion, setCurrentQuestion] = useState(null);
 
   useEffect(() => {
-    const newSocket = io(SOCKET_URL);
-    setSocket(newSocket);
+    if (!socket) return;
 
-    const newSntp = new SNTPClient(newSocket);
+    const newSntp = new SNTPClient(socket);
     setSntp(newSntp);
     newSntp.startSync(1000);
 
-    newSocket.on('connect', () => {
+    const tryReconnect = () => {
       const storedSid = localStorage.getItem('kahoot_host_sid');
       if (storedSid) {
         setGameState(STATES.LOADING);
-        newSocket.emit('host:reconnect', { sid: storedSid });
+        socket.emit('host:reconnect', { sid: storedSid });
       }
-    });
+    };
 
-    newSocket.on('host:reconnected', (data) => {
+    const handleReconnected = (data) => {
       setSid(data.sid);
       setQuestions(data.questions);
       setPlayerCount(data.playerCount);
@@ -65,19 +62,19 @@ export function KahootHostProvider({ children }) {
       } else {
         setGameState(STATES.START);
       }
-    });
+    };
 
-    newSocket.on('host:questions', (qs) => {
+    const handleQuestions = (qs) => {
       setQuestions(qs);
-    });
+    };
 
-    newSocket.on('host:join-success', (data) => {
+    const handleJoinSuccess = (data) => {
       setSid(data.sid);
       localStorage.setItem('kahoot_host_sid', data.sid);
       setGameState(STATES.START);
-    });
+    };
 
-    newSocket.on('host:question-start', (data) => {
+    const handleQuestionStart = (data) => {
       // CRITICAL: replace currentQuestion with the server-shuffled options the players also
       // received, so option positions/colors/shapes match across host and player screens.
       setCurrentQuestion({
@@ -94,17 +91,17 @@ export function KahootHostProvider({ children }) {
       // Fresh question = fresh leaderboard animation state (needed for back-to-back questions).
       setOldLeaderboard([]);
       setAnswerDistribution({});
-    });
+    };
 
-    newSocket.on('host:player-answered', (data) => {
+    const handlePlayerAnswered = (data) => {
       setPlayerCount(data);
-    });
+    };
 
-    newSocket.on('host:player-joined', (data) => {
+    const handlePlayerJoined = (data) => {
       setPlayerCount(prev => ({ ...prev, total: data.count }));
-    });
+    };
 
-    newSocket.on('question:leaderboard', (data) => {
+    const handleLeaderboard = (data) => {
       if (data.top5) {
         setOldLeaderboard(prev => prev.length > 0 ? prev : data.top5.map(p => ({...p, score: p.score - (p.lastPoints || 0)})));
         setLeaderboard(data.top5);
@@ -113,27 +110,50 @@ export function KahootHostProvider({ children }) {
         setLeaderboard(data);
       }
       setGameState(STATES.RESULTS);
-    });
+    };
 
-    newSocket.on('quiz:final-leaderboard', (lb) => {
+    const handleFinalLeaderboard = (lb) => {
       // Update the leaderboard with the *complete* final standings (full list, not just top 5).
       // We don't force a state transition here — the active host UI is in charge of moving to
       // PODIUM / FINAL so we don't fight whatever animation is currently running.
       setLeaderboard(lb);
-    });
+    };
 
-    newSocket.on('error', ({ message }) => {
+    const handleError = ({ message }) => {
       setError(message);
       if (['Session expired', 'Invalid session'].includes(message)) {
         localStorage.removeItem('kahoot_host_sid');
         setGameState(STATES.START);
       }
-    });
+    };
+
+    socket.on('connect', tryReconnect);
+    socket.on('host:reconnected', handleReconnected);
+    socket.on('host:questions', handleQuestions);
+    socket.on('host:join-success', handleJoinSuccess);
+    socket.on('host:question-start', handleQuestionStart);
+    socket.on('host:player-answered', handlePlayerAnswered);
+    socket.on('host:player-joined', handlePlayerJoined);
+    socket.on('question:leaderboard', handleLeaderboard);
+    socket.on('quiz:final-leaderboard', handleFinalLeaderboard);
+    socket.on('error', handleError);
+
+    if (socket.connected) tryReconnect();
 
     return () => {
-      newSocket.disconnect();
+      newSntp.stopSync();
+      socket.off('connect', tryReconnect);
+      socket.off('host:reconnected', handleReconnected);
+      socket.off('host:questions', handleQuestions);
+      socket.off('host:join-success', handleJoinSuccess);
+      socket.off('host:question-start', handleQuestionStart);
+      socket.off('host:player-answered', handlePlayerAnswered);
+      socket.off('host:player-joined', handlePlayerJoined);
+      socket.off('question:leaderboard', handleLeaderboard);
+      socket.off('quiz:final-leaderboard', handleFinalLeaderboard);
+      socket.off('error', handleError);
     };
-  }, []);
+  }, [socket]);
 
   const startQuestion = (questionId) => {
     if (socket && sid) {

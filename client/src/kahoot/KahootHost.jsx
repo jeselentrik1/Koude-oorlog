@@ -4,6 +4,7 @@ import { Trophy, Users, Clock, Star, Play, Check, ChevronRight, Crown, Award, Me
 import { useAssetCache } from '../components/AssetContext';
 import { useKahootHost, STATES } from './KahootHostContext';
 import coldWarBg from '../assets/cold_war.jpeg';
+import qrCodeImg from '../assets/qr_code.png';
 
 const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
 
@@ -151,15 +152,8 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
     return () => cancelAnimationFrame(timer);
   }, [gameState, sntp, startTime, currentQuestion, setGameState]);
 
-  // Lobby auto-complete: once we've successfully joined a session, drop straight back to
-  // the slide deck so the audience sees a "waiting for players" lobby UI on their phones
-  // rather than the host's start screen blocking the presenter.
-  useEffect(() => {
-    if (!isLobby || hasCompleted) return;
-    if (sid && socket) {
-      finishInterstitial();
-    }
-  }, [isLobby, sid, socket, hasCompleted, finishInterstitial]);
+  // In the past, the lobby immediately auto-completed, but we now show a beautiful
+  // lobby join screen where students can scan the QR code and join the game.
 
   // Robust question start: when we have everything we need (socket, sid, questions, and a
   // target questionId), and we haven't already started this question for this instance,
@@ -304,13 +298,43 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
         handleContinuePresenting();
       } else if (state === STATES.PODIUM) {
         handleFinishFromPodium();
+      } else if (isLobby && !hasCompleted) {
+        finishInterstitial();
       }
     };
     socket.on('presenter:nav', onNav);
     return () => {
       socket.off('presenter:nav', onNav);
     };
-  }, [socket, handleNextFromResults, handleContinuePresenting, handleFinishFromPodium]);
+  }, [socket, isLobby, hasCompleted, handleNextFromResults, handleContinuePresenting, handleFinishFromPodium, finishInterstitial]);
+
+  // Keyboard navigation for the lobby, results, leaderboard and podium screens.
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+      if (e.target.isContentEditable) return;
+
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'Enter') {
+        const state = gameState;
+        if (state === STATES.RESULTS) {
+          e.preventDefault();
+          handleNextFromResults();
+        } else if (state === STATES.LEADERBOARD) {
+          e.preventDefault();
+          handleContinuePresenting();
+        } else if (state === STATES.PODIUM) {
+          e.preventDefault();
+          handleFinishFromPodium();
+        } else if (isLobby && sid && !hasCompleted) {
+          e.preventDefault();
+          finishInterstitial();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState, isLobby, sid, hasCompleted, handleNextFromResults, handleContinuePresenting, handleFinishFromPodium, finishInterstitial]);
 
   // Loading-state safety net: if we're stuck in LOADING for too long (e.g. reconnect
   // timeout), drop back to the password screen so the host can recover instead of seeing
@@ -328,6 +352,104 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
     }, 5000);
     return () => clearTimeout(timer);
   }, [gameState, sid, setGameState, setError]);
+
+  // UI Renderers
+  if (isLobby && sid) {
+    return (
+      <div className="w-full h-full bg-[#020617] text-white font-sans flex flex-col items-center justify-center relative overflow-hidden p-16 select-none">
+        {/* Dynamic Background */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={getAssetUrl(coldWarBg)} 
+            alt="" 
+            className="w-full h-full object-cover scale-105 blur-md opacity-25" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-slate-900/70 to-slate-950/90" />
+        </div>
+
+        {/* Heavy industrial decorative elements (matching presentation slide corners) */}
+        <div className="absolute top-0 left-0 w-full h-full border-[30px] border-white/5 pointer-events-none" />
+        <div className="absolute top-16 left-16 w-16 h-16 border-t-4 border-l-4 border-white/25" />
+        <div className="absolute top-16 right-16 w-16 h-16 border-t-4 border-r-4 border-white/25" />
+        <div className="absolute bottom-16 left-16 w-16 h-16 border-b-4 border-l-4 border-white/25" />
+        <div className="absolute bottom-16 right-16 w-16 h-16 border-b-4 border-r-4 border-white/25" />
+
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8 }}
+          className="relative z-10 w-full h-full flex flex-col justify-between items-center"
+        >
+          {/* Header */}
+          <div className="text-center mt-6">
+            <h1 className="text-8xl font-black mb-4 uppercase tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)]">
+              De Koude Oorlog Quiz
+            </h1>
+            <div className="h-2 w-48 bg-red-700 mx-auto mb-6 shadow-xl" />
+            <h2 className="text-3xl font-extrabold text-slate-300 tracking-wide uppercase">
+              Volg de stappen om deel te nemen
+            </h2>
+          </div>
+
+          {/* Core Layout: Grid using full width and height */}
+          <div className="grid grid-cols-12 gap-16 w-full flex-1 my-10 items-center px-12">
+            {/* Steps Column (Left) */}
+            <div className="col-span-7 bg-black/40 border border-white/10 p-10 rounded-[2.5rem] backdrop-blur-2xl flex flex-col justify-between shadow-[0_30px_60px_rgba(0,0,0,0.6)] relative overflow-hidden h-[500px]">
+              <div className="absolute top-0 left-0 w-3 h-full bg-red-700" />
+              
+              <div className="flex flex-col gap-8">
+                <div className="flex items-start gap-6">
+                  <span className="flex items-center justify-center bg-white text-black font-black text-2xl w-14 h-14 rounded-2xl shrink-0 shadow-xl">1</span>
+                  <div className="flex-1">
+                    <h3 className="text-3xl font-black uppercase tracking-tight mb-2 text-white">Open de website</h3>
+                    <p className="text-xl text-slate-300 leading-normal">
+                      Ga op je telefoon of laptop naar:
+                      <span className="block mt-1 text-4xl font-black text-white underline decoration-red-700 decoration-4 underline-offset-8 animate-pulse">
+                        koudeoorlog.site
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-6">
+                  <span className="flex items-center justify-center bg-white text-black font-black text-2xl w-14 h-14 rounded-2xl shrink-0 shadow-xl">2</span>
+                  <div className="flex-1">
+                    <h3 className="text-3xl font-black uppercase tracking-tight mb-2 text-white">Vul je naam in</h3>
+                    <p className="text-xl text-slate-300 leading-normal">
+                      Kies een unieke naam en klik op deelnemen om de lobby binnen te gaan.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Player counter */}
+              <div className="mt-4 flex items-center gap-5 bg-white/5 border border-white/10 px-6 py-4 rounded-2xl w-full">
+                <Users className="w-10 h-10 text-red-500 animate-pulse" />
+                <div className="text-left">
+                  <span className="text-xs font-black text-white/40 uppercase tracking-[0.25em] block mb-0.5">Aantal actieve deelnemers</span>
+                  <span className="text-4xl font-black text-white tracking-tighter leading-none">{playerCount.total}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* QR Code Column (Right) */}
+            <div className="col-span-5 flex flex-col items-center justify-center bg-black/40 border border-white/10 p-12 rounded-[2.5rem] backdrop-blur-2xl shadow-[0_30px_60px_rgba(0,0,0,0.6)] h-[500px]">
+              <div className="bg-white p-6 rounded-[2rem] shadow-[0_25px_60px_rgba(255,255,255,0.15)] mb-6 border border-white/10 flex items-center justify-center">
+                <img
+                  src={getAssetUrl(qrCodeImg)}
+                  alt="QR Code koudeoorlog.site"
+                  className="w-[320px] h-[320px]"
+                />
+              </div>
+              <span className="text-white/40 uppercase tracking-[0.25em] text-sm font-black mt-2">
+                Scan om direct deel te nemen
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   // UI Renderers
   return (
@@ -350,7 +472,7 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
           </div>
         )}
 
-        {(gameState === STATES.LOADING || (gameState === STATES.START && sid)) && (
+        {!isLobby && (gameState === STATES.LOADING || (gameState === STATES.START && sid)) && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -362,6 +484,7 @@ export default function KahootHost({ questionId, questionIds, isLobby, onComplet
             </p>
           </motion.div>
         )}
+
 
         {gameState === STATES.START && !sid && (
           <motion.div 

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { Play, Pause, RotateCcw, ChevronRight, ChevronLeft, Mic, Clock, Layers } from 'lucide-react';
 import { PresenterDataProvider, usePresenterData, formatDuration, speakerColor, PRESENTER_SPEAKERS } from './PresenterDataContext';
+import { SocketProvider } from './SocketContext';
 
 /**
  * Standalone presenter window (`/present/notes`) — designed to be opened on a
@@ -17,25 +18,16 @@ import { PresenterDataProvider, usePresenterData, formatDuration, speakerColor, 
  */
 export default function PresenterView({ slidesMeta }) {
   return (
-    <PresenterDataProvider>
-      <PresenterViewInner slidesMeta={slidesMeta} />
-    </PresenterDataProvider>
+    <SocketProvider>
+      <PresenterDataProvider>
+        <PresenterViewInner slidesMeta={slidesMeta} />
+      </PresenterDataProvider>
+    </SocketProvider>
   );
 }
 
 function PresenterViewInner({ slidesMeta }) {
-  const { timerState, notes, available, computeElapsed, timerAction, emitDeckNav } = usePresenterData();
-  const [, setTick] = useState(0);
-
-  useEffect(() => {
-    let raf;
-    const loop = () => {
-      setTick((t) => (t + 1) % 1_000_000);
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, []);
+  const { timerState, notes, available, timerAction, emitDeckNav } = usePresenterData();
 
   // Prev/next drives the main /present tab via socket (same logic as arrow keys there — substappen inbegrepen).
   useEffect(() => {
@@ -78,7 +70,6 @@ function PresenterViewInner({ slidesMeta }) {
   })();
   const nextNote = nextSlideKey ? notes[nextSlideKey] : null;
 
-  const elapsed = computeElapsed();
   const isRunning = !!timerState?.running;
 
   return (
@@ -109,7 +100,6 @@ function PresenterViewInner({ slidesMeta }) {
         <div className="col-span-4 flex flex-col gap-6 min-h-0">
           <MainTimer
             running={isRunning}
-            elapsedMs={elapsed.main}
             onStart={() => timerAction('start')}
             onPause={() => timerAction('pause')}
             onReset={() => timerAction('reset')}
@@ -117,7 +107,6 @@ function PresenterViewInner({ slidesMeta }) {
           <SpeakerTimers
             current={currentSpeaker}
             running={isRunning}
-            elapsed={elapsed.speakers}
           />
           <NextSlidePreview nextNote={nextNote} nextSlideKey={nextSlideKey} slidesMeta={slidesMeta} />
         </div>
@@ -194,7 +183,7 @@ function SpeakerHeader({ speaker, slideIndex, subslideIndex, subslideCount, tota
   );
 }
 
-function NotesPanel({ html }) {
+const NotesPanel = memo(function NotesPanel({ html }) {
   return (
     <div className="flex-1 min-h-0 bg-white/[0.03] border border-white/10 rounded-3xl p-8 overflow-y-auto shadow-2xl backdrop-blur-xl">
       <div className="text-white/40 uppercase tracking-[0.3em] text-[10px] font-black mb-4">Notities</div>
@@ -208,9 +197,31 @@ function NotesPanel({ html }) {
       )}
     </div>
   );
-}
+});
 
-function MainTimer({ running, elapsedMs, onStart, onPause, onReset }) {
+function MainTimer({ running, onStart, onPause, onReset }) {
+  const { computeElapsed } = usePresenterData();
+  const [elapsedMs, setElapsedMs] = useState(() => computeElapsed().main);
+
+  useEffect(() => {
+    if (!running) {
+      setElapsedMs(computeElapsed().main);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setElapsedMs(computeElapsed().main);
+    }, 100);
+
+    setElapsedMs(computeElapsed().main);
+
+    return () => clearInterval(interval);
+  }, [running, computeElapsed]);
+
+  useEffect(() => {
+    setElapsedMs(computeElapsed().main);
+  }, [computeElapsed]);
+
   return (
     <div className="bg-white/[0.04] border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
       <div className="flex items-center justify-between mb-4">
@@ -254,7 +265,29 @@ function MainTimer({ running, elapsedMs, onStart, onPause, onReset }) {
   );
 }
 
-function SpeakerTimers({ current, running, elapsed }) {
+function SpeakerTimers({ current, running }) {
+  const { computeElapsed } = usePresenterData();
+  const [elapsed, setElapsed] = useState(() => computeElapsed().speakers);
+
+  useEffect(() => {
+    if (!running) {
+      setElapsed(computeElapsed().speakers);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setElapsed(computeElapsed().speakers);
+    }, 100);
+
+    setElapsed(computeElapsed().speakers);
+
+    return () => clearInterval(interval);
+  }, [running, computeElapsed]);
+
+  useEffect(() => {
+    setElapsed(computeElapsed().speakers);
+  }, [computeElapsed]);
+
   return (
     <div className="bg-white/[0.04] border border-white/10 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
       <div className="flex items-center gap-2 text-white/40 uppercase tracking-[0.3em] text-[10px] font-black mb-4">

@@ -1,7 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
-
-const SOCKET_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+import { useSocket } from './SocketContext';
 
 const PresenterDataContext = createContext(null);
 
@@ -22,7 +20,7 @@ const SPEAKERS = ['Jess', 'Thibo', 'Nour'];
  * wall-clock time and the server's reported `serverNow`.
  */
 export function PresenterDataProvider({ children }) {
-  const [socket, setSocket] = useState(null);
+  const { socket } = useSocket();
   const [available, setAvailable] = useState(true);
   const [notes, setNotes] = useState({});
   const [timerState, setTimerState] = useState(null);
@@ -30,8 +28,7 @@ export function PresenterDataProvider({ children }) {
   const serverNowAtReceiveRef = useRef(0);
 
   useEffect(() => {
-    const s = io(SOCKET_URL);
-    setSocket(s);
+    if (!socket) return;
 
     const handleSnapshot = ({ state, notes: notesMap }) => {
       clientReceivedAtRef.current = Date.now();
@@ -49,19 +46,25 @@ export function PresenterDataProvider({ children }) {
       setNotes((prev) => ({ ...prev, [slideKey]: { speaker: speaker || '', notes: noteHtml || '' } }));
     };
     const handleUnavailable = () => setAvailable(false);
+    const sendHello = () => {
+      socket.emit('presenter:hello');
+    };
 
-    s.on('connect', () => {
-      s.emit('presenter:hello');
-    });
-    s.on('presenter:snapshot', handleSnapshot);
-    s.on('presenter:state', handleState);
-    s.on('presenter:note', handleNote);
-    s.on('presenter:unavailable', handleUnavailable);
+    socket.on('connect', sendHello);
+    socket.on('presenter:snapshot', handleSnapshot);
+    socket.on('presenter:state', handleState);
+    socket.on('presenter:note', handleNote);
+    socket.on('presenter:unavailable', handleUnavailable);
+    if (socket.connected) sendHello();
 
     return () => {
-      s.disconnect();
+      socket.off('connect', sendHello);
+      socket.off('presenter:snapshot', handleSnapshot);
+      socket.off('presenter:state', handleState);
+      socket.off('presenter:note', handleNote);
+      socket.off('presenter:unavailable', handleUnavailable);
     };
-  }, []);
+  }, [socket]);
 
   const sendSlideChange = (slideKey) => {
     if (!socket) return;

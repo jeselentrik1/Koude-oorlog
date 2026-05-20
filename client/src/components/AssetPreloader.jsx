@@ -23,6 +23,7 @@ import ussrLogo from '../assets/ussr.svg';
 import vrtNwsLogo from '../assets/vrt_nws.png';
 import wallImage from '../assets/wall.png';
 import wimImage from '../assets/wim_delaere.jpg';
+import qrCodeImg from '../assets/qr_code.png';
 
 const ASSETS = {
   images: [
@@ -45,6 +46,7 @@ const ASSETS = {
     vrtNwsLogo,
     wallImage,
     wimImage,
+    qrCodeImg,
     'https://www.transparenttextures.com/patterns/stardust.png'
   ],
   models: [
