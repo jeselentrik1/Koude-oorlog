@@ -88,6 +88,10 @@ function PresentationInner({ slides, slideMetadata = {}, interstitials = [], nav
   const skipNextBroadcastRef = useRef(false);
   /** Track last seen server slide key so we only follow remote *changes*, not stale snapshots on connect. */
   const lastRemoteSlideKeyRef = useRef(null);
+  const localSlideKeyRef = useRef(slideKey);
+  useEffect(() => {
+    localSlideKeyRef.current = slideKey;
+  }, [slideKey]);
 
   // Slide metadata exposed to the presenter view (used for "next slide preview").
   const slidesMeta = useMemo(() => slides.map((SlideComp, idx) => ({
@@ -145,33 +149,38 @@ function PresentationInner({ slides, slideMetadata = {}, interstitials = [], nav
     }
   }, [isStarted]);
 
-  // Server `currentSlideKey` is the shared source of truth — keep local deck in sync
-  // so multiple presenter windows / tabs don't fight over different positions.
+  // Follow server slide changes from other clients — only when the server key
+  // actually changes, not when local state moves ahead of a pending broadcast.
   useEffect(() => {
     if (!isStarted) return;
     const remoteKey = timerState?.currentSlideKey;
     if (!remoteKey) return;
 
-    if (remoteKey === slideKey) {
+    const prevRemote = lastRemoteSlideKeyRef.current;
+
+    if (prevRemote === null) {
       lastRemoteSlideKeyRef.current = remoteKey;
       return;
     }
 
-    const prevRemote = lastRemoteSlideKeyRef.current;
+    if (remoteKey === prevRemote) return;
+
+    const prevParsed = parseSlideKey(prevRemote);
+    const { slideIndex, subslideIndex: subIdx } = parseSlideKey(remoteKey);
     lastRemoteSlideKeyRef.current = remoteKey;
 
-    // On first snapshot after connect, prefer the local deck position over a stale DB value.
-    if (prevRemote === null) return;
+    if (remoteKey === localSlideKeyRef.current) return;
 
     skipNextBroadcastRef.current = true;
-    const { slideIndex, subslideIndex: subIdx } = parseSlideKey(remoteKey);
-    const { slideIndex: localSlide, subslideIndex: localSub } = parseSlideKey(slideKey);
     setDirection(
-      slideIndex > localSlide || (slideIndex === localSlide && subIdx > localSub) ? 1 : -1
+      slideIndex > prevParsed.slideIndex ||
+        (slideIndex === prevParsed.slideIndex && subIdx > prevParsed.subslideIndex)
+        ? 1
+        : -1
     );
     setCurrentSlideIndex(slideIndex);
     setSubslideIndex(subIdx);
-  }, [timerState?.currentSlideKey, isStarted, slideKey]);
+  }, [timerState?.currentSlideKey, isStarted]);
 
   // Whenever the visible (slide, subslide) changes locally, broadcast it so the
   // presenter view + edit panel can stay in lockstep.
@@ -219,61 +228,96 @@ function PresentationInner({ slides, slideMetadata = {}, interstitials = [], nav
   const goToNextSlide = useCallback(() => {
     if (activeInterstitial) return;
 
-    const baseKey = timerState?.currentSlideKey || slideKey;
-    const targetKey = nextSlideKey(baseKey, slidesMeta);
-    if (!targetKey) return;
-
-    const { slideIndex: fromSlide } = parseSlideKey(baseKey);
-    const { slideIndex: toSlide, subslideIndex: toSub } = parseSlideKey(targetKey);
-
-    if (toSlide > fromSlide) {
-      const interstitial = interstitials.find((i) => i.atIndex === toSlide);
-      if (interstitial && !skipsQuizInterstitials(selectedOption)) {
-        setActiveInterstitial(interstitial);
-        return;
-      }
+    if (subslideIndex < subslideCount - 1) {
+      setSubslideIndex((i) => i + 1);
+      return;
     }
 
-    setDirection(1);
-    setCurrentSlideIndex(toSlide);
-    setSubslideIndex(toSub);
+    const nextIndex = currentSlideIndex + 1;
+    if (nextIndex < slides.length) {
+      const interstitial = interstitials.find((i) => i.atIndex === nextIndex);
+      if (interstitial && !skipsQuizInterstitials(selectedOption)) {
+        setActiveInterstitial(interstitial);
+      } else {
+        setDirection(1);
+        setCurrentSlideIndex(nextIndex);
+        setSubslideIndex(0);
+      }
+    }
   }, [
+    currentSlideIndex,
+    slides.length,
     activeInterstitial,
     interstitials,
     selectedOption,
-    slideKey,
-    slidesMeta,
-    timerState?.currentSlideKey,
+    subslideIndex,
+    subslideCount,
   ]);
 
   const goToPrevSlide = useCallback(() => {
     if (activeInterstitial) return;
 
-    const baseKey = timerState?.currentSlideKey || slideKey;
-    const targetKey = prevSlideKey(baseKey, slidesMeta);
-    if (!targetKey) return;
+    if (subslideIndex > 0) {
+      setSubslideIndex((i) => i - 1);
+      return;
+    }
 
-    const { slideIndex: toSlide, subslideIndex: toSub } = parseSlideKey(targetKey);
-    setDirection(-1);
-    setCurrentSlideIndex(toSlide);
-    setSubslideIndex(toSub);
-  }, [activeInterstitial, slideKey, slidesMeta, timerState?.currentSlideKey]);
+    if (currentSlideIndex > 0) {
+      const prevIdx = currentSlideIndex - 1;
+      setDirection(-1);
+      setCurrentSlideIndex(prevIdx);
+      setSubslideIndex(Math.max(0, subslideCountFor(slides[prevIdx]) - 1));
+    }
+  }, [currentSlideIndex, activeInterstitial, subslideIndex, slides]);
+
+  const applyRemoteNav = useCallback(
+    (direction) => {
+      if (activeInterstitial) return;
+
+      const baseKey = timerState?.currentSlideKey || slideKey;
+      const targetKey =
+        direction === 'next' ? nextSlideKey(baseKey, slidesMeta) : prevSlideKey(baseKey, slidesMeta);
+      if (!targetKey) return;
+
+      const { slideIndex: fromSlide } = parseSlideKey(baseKey);
+      const { slideIndex: toSlide, subslideIndex: toSub } = parseSlideKey(targetKey);
+
+      if (direction === 'next' && toSlide > fromSlide) {
+        const interstitial = interstitials.find((i) => i.atIndex === toSlide);
+        if (interstitial && !skipsQuizInterstitials(selectedOption)) {
+          setActiveInterstitial(interstitial);
+          return;
+        }
+      }
+
+      setDirection(direction === 'next' ? 1 : -1);
+      setCurrentSlideIndex(toSlide);
+      setSubslideIndex(toSub);
+    },
+    [
+      activeInterstitial,
+      interstitials,
+      selectedOption,
+      slideKey,
+      slidesMeta,
+      timerState?.currentSlideKey,
+    ]
+  );
 
   // Presenter window ( /present/notes ) and co. can request prev/next — same as arrow keys here.
   useEffect(() => {
     if (!socket || !isStarted) return;
 
     const onNav = ({ direction }) => {
-      if (activeInterstitial) return;
-      if (direction === 'next') goToNextSlide();
-      else if (direction === 'prev') goToPrevSlide();
+      if (direction === 'next') applyRemoteNav('next');
+      else if (direction === 'prev') applyRemoteNav('prev');
     };
 
     socket.on('presenter:nav', onNav);
     return () => {
       socket.off('presenter:nav', onNav);
     };
-  }, [socket, isStarted, activeInterstitial, goToNextSlide, goToPrevSlide]);
+  }, [socket, isStarted, applyRemoteNav]);
 
   // Keyboard navigation
   useEffect(() => {
