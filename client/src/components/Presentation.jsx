@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { PanelRight } from 'lucide-react';
 import { SlideContext } from './SlideContext';
@@ -7,6 +7,7 @@ import Background from './Background';
 import AssetPreloader from './AssetPreloader';
 import { PresenterDataProvider, usePresenterData } from './PresenterDataContext';
 import PresenterEditPanel from './PresenterEditPanel';
+import { nextSlideKey, parseSlideKey, prevSlideKey } from '../utils/slideKey';
 
 /** Design canvas: uniform scale to fit viewport (letterboxing via outer black frame). */
 export const DESIGN_WIDTH = 1920;
@@ -82,7 +83,11 @@ function PresentationInner({ slides, slideMetadata = {}, interstitials = [], nav
 
   const isEditMode = isEditPresentationMode(selectedOption);
 
-  const { sendSlideChange, socket } = usePresenterData();
+  const { sendSlideChange, socket, timerState } = usePresenterData();
+  /** Skip one broadcast when applying slide position from the server (avoid echo loops). */
+  const skipNextBroadcastRef = useRef(false);
+  /** Track last seen server slide key so we only follow remote *changes*, not stale snapshots on connect. */
+  const lastRemoteSlideKeyRef = useRef(null);
 
   // Slide metadata exposed to the presenter view (used for "next slide preview").
   const slidesMeta = useMemo(() => slides.map((SlideComp, idx) => ({
@@ -134,11 +139,50 @@ function PresentationInner({ slides, slideMetadata = {}, interstitials = [], nav
     return () => window.removeEventListener('resize', updateScale);
   }, []);
 
-  // Whenever the visible (slide, subslide) changes, broadcast it so the
+  useEffect(() => {
+    if (!isStarted) {
+      lastRemoteSlideKeyRef.current = null;
+    }
+  }, [isStarted]);
+
+  // Server `currentSlideKey` is the shared source of truth — keep local deck in sync
+  // so multiple presenter windows / tabs don't fight over different positions.
+  useEffect(() => {
+    if (!isStarted) return;
+    const remoteKey = timerState?.currentSlideKey;
+    if (!remoteKey) return;
+
+    if (remoteKey === slideKey) {
+      lastRemoteSlideKeyRef.current = remoteKey;
+      return;
+    }
+
+    const prevRemote = lastRemoteSlideKeyRef.current;
+    lastRemoteSlideKeyRef.current = remoteKey;
+
+    // On first snapshot after connect, prefer the local deck position over a stale DB value.
+    if (prevRemote === null) return;
+
+    skipNextBroadcastRef.current = true;
+    const { slideIndex, subslideIndex: subIdx } = parseSlideKey(remoteKey);
+    const { slideIndex: localSlide, subslideIndex: localSub } = parseSlideKey(slideKey);
+    setDirection(
+      slideIndex > localSlide || (slideIndex === localSlide && subIdx > localSub) ? 1 : -1
+    );
+    setCurrentSlideIndex(slideIndex);
+    setSubslideIndex(subIdx);
+  }, [timerState?.currentSlideKey, isStarted, slideKey]);
+
+  // Whenever the visible (slide, subslide) changes locally, broadcast it so the
   // presenter view + edit panel can stay in lockstep.
   useEffect(() => {
+    if (!isStarted) return;
+    if (skipNextBroadcastRef.current) {
+      skipNextBroadcastRef.current = false;
+      return;
+    }
     sendSlideChange(slideKey);
-  }, [slideKey, sendSlideChange]);
+  }, [slideKey, sendSlideChange, isStarted]);
 
   // Clamp subslide if the active slide doesn't have that many sub-steps.
   useEffect(() => {
@@ -175,41 +219,45 @@ function PresentationInner({ slides, slideMetadata = {}, interstitials = [], nav
   const goToNextSlide = useCallback(() => {
     if (activeInterstitial) return;
 
-    // Subslides have priority — if the current slide has more steps, advance step.
-    if (subslideIndex < subslideCount - 1) {
-      setSubslideIndex((i) => i + 1);
-      return;
-    }
+    const baseKey = timerState?.currentSlideKey || slideKey;
+    const targetKey = nextSlideKey(baseKey, slidesMeta);
+    if (!targetKey) return;
 
-    const nextIndex = currentSlideIndex + 1;
-    if (nextIndex < slides.length) {
-      const interstitial = interstitials.find(i => i.atIndex === nextIndex);
+    const { slideIndex: fromSlide } = parseSlideKey(baseKey);
+    const { slideIndex: toSlide, subslideIndex: toSub } = parseSlideKey(targetKey);
+
+    if (toSlide > fromSlide) {
+      const interstitial = interstitials.find((i) => i.atIndex === toSlide);
       if (interstitial && !skipsQuizInterstitials(selectedOption)) {
         setActiveInterstitial(interstitial);
-      } else {
-        setDirection(1);
-        setCurrentSlideIndex(nextIndex);
-        setSubslideIndex(0);
+        return;
       }
     }
-  }, [currentSlideIndex, slides.length, activeInterstitial, interstitials, selectedOption, subslideIndex, subslideCount]);
+
+    setDirection(1);
+    setCurrentSlideIndex(toSlide);
+    setSubslideIndex(toSub);
+  }, [
+    activeInterstitial,
+    interstitials,
+    selectedOption,
+    slideKey,
+    slidesMeta,
+    timerState?.currentSlideKey,
+  ]);
 
   const goToPrevSlide = useCallback(() => {
     if (activeInterstitial) return;
 
-    if (subslideIndex > 0) {
-      setSubslideIndex((i) => i - 1);
-      return;
-    }
+    const baseKey = timerState?.currentSlideKey || slideKey;
+    const targetKey = prevSlideKey(baseKey, slidesMeta);
+    if (!targetKey) return;
 
-    if (currentSlideIndex > 0) {
-      const prevIdx = currentSlideIndex - 1;
-      setDirection(-1);
-      setCurrentSlideIndex(prevIdx);
-      // Land on the *last* subslide of the previous slide so back-nav feels right.
-      setSubslideIndex(Math.max(0, subslideCountFor(slides[prevIdx]) - 1));
-    }
-  }, [currentSlideIndex, activeInterstitial, subslideIndex, slides]);
+    const { slideIndex: toSlide, subslideIndex: toSub } = parseSlideKey(targetKey);
+    setDirection(-1);
+    setCurrentSlideIndex(toSlide);
+    setSubslideIndex(toSub);
+  }, [activeInterstitial, slideKey, slidesMeta, timerState?.currentSlideKey]);
 
   // Presenter window ( /present/notes ) and co. can request prev/next — same as arrow keys here.
   useEffect(() => {
