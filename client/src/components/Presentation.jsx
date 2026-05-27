@@ -88,10 +88,6 @@ function PresentationInner({ slides, slideMetadata = {}, interstitials = [], nav
   const skipNextBroadcastRef = useRef(false);
   /** Track last seen server slide key so we only follow remote *changes*, not stale snapshots on connect. */
   const lastRemoteSlideKeyRef = useRef(null);
-  const localSlideKeyRef = useRef(slideKey);
-  useEffect(() => {
-    localSlideKeyRef.current = slideKey;
-  }, [slideKey]);
 
   // Slide metadata exposed to the presenter view (used for "next slide preview").
   const slidesMeta = useMemo(() => slides.map((SlideComp, idx) => ({
@@ -101,6 +97,10 @@ function PresentationInner({ slides, slideMetadata = {}, interstitials = [], nav
 
   const subslideCount = subslideCountFor(slides[currentSlideIndex]);
   const slideKey = `${currentSlideIndex}.${subslideIndex}`;
+  const localSlideKeyRef = useRef(slideKey);
+  useEffect(() => {
+    localSlideKeyRef.current = slideKey;
+  }, [slideKey]);
 
   const handleAssetsComplete = useCallback(() => {
     setAssetsLoaded(true);
